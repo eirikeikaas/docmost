@@ -21,6 +21,7 @@ import { MigrationService } from '@docmost/db/services/migration.service';
 import { UserTokenRepo } from './repos/user-token/user-token.repo';
 import { UserSessionRepo } from '@docmost/db/repos/session/user-session.repo';
 import { BacklinkRepo } from '@docmost/db/repos/backlink/backlink.repo';
+import { DecisionRepo } from '@docmost/db/repos/decision/decision.repo';
 import { ShareRepo } from '@docmost/db/repos/share/share.repo';
 import { PublicSpaceRepo } from '@docmost/db/repos/public-space/public-space.repo';
 import { NotificationRepo } from '@docmost/db/repos/notification/notification.repo';
@@ -88,6 +89,7 @@ import { normalizePostgresUrl } from '../common/helpers';
     UserTokenRepo,
     UserSessionRepo,
     BacklinkRepo,
+    DecisionRepo,
     ShareRepo,
     PublicSpaceRepo,
     NotificationRepo,
@@ -114,6 +116,7 @@ import { normalizePostgresUrl } from '../common/helpers';
     UserTokenRepo,
     UserSessionRepo,
     BacklinkRepo,
+    DecisionRepo,
     ShareRepo,
     PublicSpaceRepo,
     NotificationRepo,

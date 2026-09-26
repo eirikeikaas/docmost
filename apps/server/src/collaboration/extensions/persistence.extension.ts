@@ -19,6 +19,7 @@ import { Queue } from 'bullmq';
 import {
   extractMentions,
   extractUserMentions,
+  extractDecisions,
 } from '../../common/helpers/prosemirror/utils';
 import { isDeepStrictEqual } from 'node:util';
 import {
@@ -33,6 +34,7 @@ import {
   HISTORY_INTERVAL,
 } from '../constants';
 import { TransclusionService } from '../../core/page/transclusion/transclusion.service';
+import { DecisionRepo } from '@docmost/db/repos/decision/decision.repo';
 
 @Injectable()
 export class PersistenceExtension implements Extension {
@@ -47,6 +49,7 @@ export class PersistenceExtension implements Extension {
     @InjectQueue(QueueName.NOTIFICATION_QUEUE) private notificationQueue: Queue,
     private readonly collabHistory: CollabHistoryService,
     private readonly transclusionService: TransclusionService,
+    private readonly decisionRepo: DecisionRepo,
   ) {}
 
   async onLoadDocument(data: onLoadDocumentPayload) {
@@ -155,6 +158,15 @@ export class PersistenceExtension implements Extension {
             contributorIds: contributorIds,
           },
           pageId,
+          trx,
+        );
+
+        const decisions = extractDecisions(tiptapJson);
+        await this.decisionRepo.syncPageDecisions(
+          pageId,
+          page.spaceId,
+          page.workspaceId,
+          decisions,
           trx,
         );
 

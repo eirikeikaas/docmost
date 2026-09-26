@@ -1,0 +1,28 @@
+.undecided {
+  border-left: 3px solid var(--mantine-color-gray-5);
+}
+
+.decided {
+  border-left: 3px solid var(--mantine-color-green-6);
+  background: light-dark(
+    var(--mantine-color-green-0),
+    var(--mantine-color-dark-6)
+  );
+}
+
+.statusButton {
+  margin-top: 2px;
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+}
+
+.label {
+  user-select: none;
+}
+
+.content {
+  outline: none;
+}

@@ -81,7 +81,7 @@ export const tiptapExtensions = [
   }),
   Heading,
   UniqueID.configure({
-    types: ['heading', 'paragraph', 'transclusionSource'],
+    types: ['heading', 'paragraph', 'transclusionSource', 'decision'],
   }),
   Comment,
   TextAlign.configure({ types: ['heading', 'paragraph'] }),
