@@ -15,6 +15,7 @@ import { getAuditLogs } from "@/ee/audit/services/audit-service";
 import { getVerificationList } from "@/ee/page-verification/services/page-verification-service";
 import { getScimTokens } from "@/ee/scim/services/scim-token-service";
 import { getOidcProviders } from "@/features/sso/services/sso-service";
+import { getScimTokens as getOwnScimTokens } from "@/features/scim/services/scim-service";
 
 export const prefetchWorkspaceMembers = () => {
   const params: QueryParams = { limit: 100, query: "" };
@@ -112,5 +113,12 @@ export const prefetchOidcProviders = () => {
   queryClient.prefetchQuery({
     queryKey: ["oidc-providers"],
     queryFn: () => getOidcProviders(),
+  });
+};
+
+export const prefetchOwnScimTokens = () => {
+  queryClient.prefetchQuery({
+    queryKey: ["scim-tokens"],
+    queryFn: () => getOwnScimTokens(),
   });
 };

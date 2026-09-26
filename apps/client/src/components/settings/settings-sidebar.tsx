@@ -16,6 +16,7 @@ import {
   IconHistory,
   IconShieldCheck,
   IconShieldLock,
+  IconRefresh,
 } from "@tabler/icons-react";
 import { Link, useLocation } from "react-router-dom";
 import classes from "./settings.module.css";
@@ -34,6 +35,7 @@ import {
   prefetchLicense,
   prefetchOidcProviders,
   prefetchScimTokens,
+  prefetchOwnScimTokens,
   prefetchShares,
   prefetchSpaces,
   prefetchSsoProviders,
@@ -101,6 +103,12 @@ const groupedData: DataGroup[] = [
         label: "Single Sign-On (OIDC)",
         icon: IconShieldLock,
         path: "/settings/sso",
+        role: "admin",
+      },
+      {
+        label: "SCIM Provisioning",
+        icon: IconRefresh,
+        path: "/settings/scim",
         role: "admin",
       },
       { label: "Groups", icon: IconUsersGroup, path: "/settings/groups" },
@@ -235,6 +243,9 @@ export default function SettingsSidebar() {
               break;
             case "Single Sign-On (OIDC)":
               prefetchHandler = prefetchOidcProviders;
+              break;
+            case "SCIM Provisioning":
+              prefetchHandler = prefetchOwnScimTokens;
               break;
             default:
               break;
