@@ -12,6 +12,7 @@ import {
   OAUTH_AUTHORIZE_THROTTLER,
   SIEM_TEST_THROTTLER,
   SSO_OIDC_THROTTLER,
+  SSO_SAML_THROTTLER,
 } from './throttler-names';
 import Redis from 'ioredis';
 
@@ -31,6 +32,7 @@ import Redis from 'ioredis';
             { name: OAUTH_AUTHORIZE_THROTTLER, ttl: 60_000, limit: 30 },
             { name: SIEM_TEST_THROTTLER, ttl: 60_000, limit: 10 },
             { name: SSO_OIDC_THROTTLER, ttl: 60_000, limit: 20 },
+            { name: SSO_SAML_THROTTLER, ttl: 60_000, limit: 20 },
           ],
           errorMessage: 'Too many requests',
           storage: new ThrottlerStorageRedisService(
