@@ -60,6 +60,7 @@ import {
   YoutubeIcon,
 } from "@/components/icons";
 import { insertBaseEmbedBlock } from "@/features/editor/components/base-embed/insert-base-embed";
+import { getSlashItems } from "@/features/editor/blocks";
 
 const CommandGroups: SlashMenuGroupedItemsType = {
   basic: [
@@ -817,7 +818,15 @@ export const getSuggestionItems = ({
     return false;
   };
 
-  for (const [group, items] of Object.entries(CommandGroups)) {
+  const commandGroups: SlashMenuGroupedItemsType = { ...CommandGroups };
+  for (const [group, items] of Object.entries(getSlashItems())) {
+    if (!commandGroups[group]) {
+      commandGroups[group] = [];
+    }
+    commandGroups[group] = [...commandGroups[group], ...items];
+  }
+
+  for (const [group, items] of Object.entries(commandGroups)) {
     const filteredItems = items.filter((item) => {
       if (excludeItems?.has(item.title)) return false;
       const translatedTitle = i18n.t(item.title);

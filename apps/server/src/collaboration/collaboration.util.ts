@@ -49,6 +49,7 @@ import {
   Footnotes,
   Footnote,
   FootnoteReference,
+  getSchemaExtensions,
 } from '@docmost/editor-ext';
 import {
   extensions as coreExtensions,
@@ -129,6 +130,7 @@ export const tiptapExtensions = [
   Footnotes,
   Footnote,
   FootnoteReference,
+  ...getSchemaExtensions(),
 ] as any;
 
 export function jsonToHtml(tiptapJson: any) {
