@@ -1476,5 +1476,17 @@
   "Test event delivered to {{name}}": "Test event delivered to {{name}}",
   "Updated SIEM destination": "Updated SIEM destination",
   "Verify TLS certificate": "Verify TLS certificate",
-  "e.g. Splunk prod": "e.g. Splunk prod"
+  "e.g. Splunk prod": "e.g. Splunk prod",
+  "Trust the email address from this provider": "Trust the email address from this provider",
+  "Accept the email claim even when the provider does not mark it as verified, as Microsoft Entra ID does. Only enable this for an issuer you control, such as a tenant-specific Entra issuer.": "Accept the email claim even when the provider does not mark it as verified, as Microsoft Entra ID does. Only enable this for an issuer you control, such as a tenant-specific Entra issuer.",
+  "Role claim": "Role claim",
+  "The claim that carries the user's roles": "The claim that carries the user's roles",
+  "Role mapping": "Role mapping",
+  "One claim=role pair per line, where the role is admin or member. Owners are never changed or created through SSO.": "One claim=role pair per line, where the role is admin or member. Owners are never changed or created through SSO.",
+  "Use one claim=role pair per line, where the role is admin or member": "Use one claim=role pair per line, where the role is admin or member",
+  "Default role for new users": "Default role for new users",
+  "Used when a new user's claim matches no role mapping": "Used when a new user's claim matches no role mapping",
+  "Required roles": "Required roles",
+  "If set, a user whose role claim has none of these cannot sign in": "If set, a user whose role claim has none of these cannot sign in",
+  "Type a role and press Enter": "Type a role and press Enter"
 }

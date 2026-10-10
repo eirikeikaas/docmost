@@ -135,7 +135,8 @@ keeps working until it expires or is revoked.
 Everything above can be set in `Settings > Single Sign-On (OIDC)`: issuer
 `https://login.microsoftonline.com/<tenant-guid>/v2.0`, client id and secret, and
 under _Advanced_: trust unverified email, role claim, role mapping
-(JSON `{"agents_admin": "admin"}`), default role and required roles. The same
+(one `claim=role` pair per line, e.g. `agents_admin=admin`), default role and
+required roles. The same
 fields are accepted by `POST /api/sso/oidc/providers` and
 `POST /api/sso/oidc/providers/update` as `trustUnverifiedEmail`, `roleClaim`,
 `roleMap`, `defaultRole`, `requiredRoles`, and returned by
