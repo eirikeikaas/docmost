@@ -57,6 +57,7 @@ export class SsoProviderService {
   async list(workspaceId: string): Promise<OidcProviderView[]> {
     const providers = await this.authProviderRepo.findByWorkspaceId(
       workspaceId,
+      'oidc',
     );
     return providers.map(toView);
   }
@@ -66,7 +67,7 @@ export class SsoProviderService {
     user: User,
     workspace: Workspace,
   ): Promise<OidcProviderView> {
-    const provider = await this.authProviderRepo.insertOidcProvider({
+    const provider = await this.authProviderRepo.insertProvider('oidc', {
       name: dto.name,
       oidcIssuer: dto.oidcIssuer,
       oidcClientId: dto.oidcClientId,
@@ -96,14 +97,16 @@ export class SsoProviderService {
     const existing = await this.authProviderRepo.findById(
       dto.id,
       workspace.id,
+      'oidc',
     );
     if (!existing) {
       throw new NotFoundException('SSO provider not found');
     }
 
-    const updated = await this.authProviderRepo.updateOidcProvider(
+    const updated = await this.authProviderRepo.updateProvider(
       dto.id,
       workspace.id,
+      'oidc',
       {
         ...(dto.name !== undefined ? { name: dto.name } : {}),
         ...(dto.oidcIssuer !== undefined ? { oidcIssuer: dto.oidcIssuer } : {}),
@@ -141,12 +144,16 @@ export class SsoProviderService {
   }
 
   async delete(id: string, workspace: Workspace): Promise<void> {
-    const existing = await this.authProviderRepo.findById(id, workspace.id);
+    const existing = await this.authProviderRepo.findById(
+      id,
+      workspace.id,
+      'oidc',
+    );
     if (!existing) {
       throw new NotFoundException('SSO provider not found');
     }
 
-    await this.authProviderRepo.softDeleteById(id, workspace.id);
+    await this.authProviderRepo.softDeleteById(id, workspace.id, 'oidc');
     this.oidcClientRegistry.invalidate(id);
 
     this.auditService.log({

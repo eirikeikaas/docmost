@@ -8,8 +8,8 @@ function createService(overrides: Partial<Record<string, any>> = {}) {
   const authProviderRepo = {
     findByWorkspaceId: jest.fn().mockResolvedValue([]),
     findById: jest.fn(),
-    insertOidcProvider: jest.fn(),
-    updateOidcProvider: jest.fn(),
+    insertProvider: jest.fn(),
+    updateProvider: jest.fn(),
     softDeleteById: jest.fn().mockResolvedValue(undefined),
     ...overrides.authProviderRepo,
   };
@@ -35,7 +35,7 @@ describe('SsoProviderService', () => {
   it('encrypts the client secret on create and never returns it in plaintext', async () => {
     const { service, authProviderRepo, encryptionService } = createService({
       authProviderRepo: {
-        insertOidcProvider: jest.fn().mockResolvedValue({
+        insertProvider: jest.fn().mockResolvedValue({
           id: 'provider_1',
           name: 'Okta',
           type: 'oidc',
@@ -61,7 +61,8 @@ describe('SsoProviderService', () => {
     );
 
     expect(encryptionService.encrypt).toHaveBeenCalledWith('super-secret');
-    expect(authProviderRepo.insertOidcProvider).toHaveBeenCalledWith(
+    expect(authProviderRepo.insertProvider).toHaveBeenCalledWith(
+      'oidc',
       expect.objectContaining({ oidcClientSecret: 'enc(super-secret)' }),
     );
     expect(result).not.toHaveProperty('oidcClientSecret');
@@ -77,7 +78,7 @@ describe('SsoProviderService', () => {
     const { service, authProviderRepo, encryptionService } = createService({
       authProviderRepo: {
         findById: jest.fn().mockResolvedValue(existing),
-        updateOidcProvider: jest.fn().mockResolvedValue({
+        updateProvider: jest.fn().mockResolvedValue({
           ...existing,
           name: 'Okta Renamed',
           type: 'oidc',
@@ -96,9 +97,10 @@ describe('SsoProviderService', () => {
     );
 
     expect(encryptionService.encrypt).not.toHaveBeenCalled();
-    expect(authProviderRepo.updateOidcProvider).toHaveBeenCalledWith(
+    expect(authProviderRepo.updateProvider).toHaveBeenCalledWith(
       'provider_1',
       workspace.id,
+      'oidc',
       { name: 'Okta Renamed' },
     );
   });
@@ -108,7 +110,7 @@ describe('SsoProviderService', () => {
       createService({
         authProviderRepo: {
           findById: jest.fn().mockResolvedValue({ id: 'provider_1', name: 'Okta', isEnabled: false }),
-          updateOidcProvider: jest.fn().mockResolvedValue({
+          updateProvider: jest.fn().mockResolvedValue({
             id: 'provider_1',
             name: 'Okta',
             type: 'oidc',
@@ -128,9 +130,10 @@ describe('SsoProviderService', () => {
     );
 
     expect(encryptionService.encrypt).toHaveBeenCalledWith('rotated-secret');
-    expect(authProviderRepo.updateOidcProvider).toHaveBeenCalledWith(
+    expect(authProviderRepo.updateProvider).toHaveBeenCalledWith(
       'provider_1',
       workspace.id,
+      'oidc',
       { oidcClientSecret: 'enc(rotated-secret)' },
     );
     expect(oidcClientRegistry.invalidate).toHaveBeenCalledWith('provider_1');
@@ -158,6 +161,7 @@ describe('SsoProviderService', () => {
     expect(authProviderRepo.softDeleteById).toHaveBeenCalledWith(
       'provider_1',
       workspace.id,
+      'oidc',
     );
     expect(oidcClientRegistry.invalidate).toHaveBeenCalledWith('provider_1');
   });
