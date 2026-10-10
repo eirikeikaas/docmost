@@ -28,6 +28,7 @@ const APP_ROUTE = {
       BILLING: "/settings/billing",
       SECURITY: "/settings/security",
       SSO: "/settings/sso",
+      SERVICE_TOKENS: "/settings/service-tokens",
     },
   },
 };
