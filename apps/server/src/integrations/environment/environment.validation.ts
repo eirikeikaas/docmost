@@ -7,11 +7,33 @@ import {
   IsUrl,
   Matches,
   MinLength,
+  ValidateBy,
   ValidateIf,
   validateSync,
 } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
 import { IsISO6391 } from '../../common/validators/is-iso6391';
+import {
+  isValidEntraTenantId,
+  isValidRoleMapEnv,
+} from '../../core/sso/entra.util';
+
+// An optional variable left blank in .env (KEY=) counts as unset.
+const isSet = (value: unknown): boolean =>
+  value !== undefined && value !== null && String(value).trim() !== '';
+
+function EnvCheck(
+  check: (value: unknown) => boolean,
+  message: string,
+): PropertyDecorator {
+  return ValidateBy({
+    name: 'envCheck',
+    validator: {
+      validate: (value): boolean => check(value),
+      defaultMessage: () => message,
+    },
+  });
+}
 
 export class EnvironmentVariables {
   @IsNotEmpty()
@@ -195,6 +217,43 @@ export class EnvironmentVariables {
   @IsIn(['postgres', 'clickhouse'])
   @IsString()
   EVENT_STORE_DRIVER: string;
+
+  // Microsoft Entra ID bootstrap - see docs/sso-entra.md
+  @ValidateIf((obj) => isSet(obj.SSO_OIDC_ENTRA_TENANT_ID))
+  @EnvCheck(
+    isValidEntraTenantId,
+    'SSO_OIDC_ENTRA_TENANT_ID must be a tenant (directory) GUID or a verified domain such as contoso.onmicrosoft.com. "common", "organizations" and "consumers" are not supported: their issuer never matches the issued tokens',
+  )
+  SSO_OIDC_ENTRA_TENANT_ID: string;
+
+  @IsOptional()
+  @IsString()
+  SSO_OIDC_ENTRA_CLIENT_ID: string;
+
+  @IsOptional()
+  @IsString()
+  SSO_OIDC_ENTRA_CLIENT_SECRET: string;
+
+  @IsOptional()
+  @IsString()
+  SSO_OIDC_ENTRA_DISPLAY_NAME: string;
+
+  @ValidateIf((obj) => isSet(obj.SSO_OIDC_ENTRA_ALLOW_SIGNUP))
+  @IsIn(['true', 'false'], {
+    message: 'SSO_OIDC_ENTRA_ALLOW_SIGNUP must be "true" or "false"',
+  })
+  SSO_OIDC_ENTRA_ALLOW_SIGNUP: string;
+
+  @ValidateIf((obj) => isSet(obj.SSO_OIDC_ENTRA_ROLE_MAP))
+  @EnvCheck(
+    isValidRoleMapEnv,
+    'SSO_OIDC_ENTRA_ROLE_MAP must look like "agents_admin=admin,agents_manage=member" (roles can only map to admin or member, never owner)',
+  )
+  SSO_OIDC_ENTRA_ROLE_MAP: string;
+
+  @IsOptional()
+  @IsString()
+  SSO_OIDC_ENTRA_REQUIRED_ROLES: string;
 
   @ValidateIf((obj) => obj.EVENT_STORE_DRIVER === 'clickhouse')
   @IsNotEmpty()
