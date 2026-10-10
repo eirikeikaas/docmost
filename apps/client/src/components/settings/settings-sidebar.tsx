@@ -15,6 +15,7 @@ import {
   IconSparkles,
   IconHistory,
   IconShieldCheck,
+  IconShieldLock,
 } from "@tabler/icons-react";
 import { Link, useLocation } from "react-router-dom";
 import classes from "./settings.module.css";
@@ -31,6 +32,7 @@ import {
   prefetchBilling,
   prefetchGroups,
   prefetchLicense,
+  prefetchOidcProviders,
   prefetchScimTokens,
   prefetchShares,
   prefetchSpaces,
@@ -93,6 +95,12 @@ const groupedData: DataGroup[] = [
         icon: IconLock,
         path: "/settings/security",
         feature: Feature.SECURITY_SETTINGS,
+        role: "admin",
+      },
+      {
+        label: "Single Sign-On (OIDC)",
+        icon: IconShieldLock,
+        path: "/settings/sso",
         role: "admin",
       },
       { label: "Groups", icon: IconUsersGroup, path: "/settings/groups" },
@@ -224,6 +232,9 @@ export default function SettingsSidebar() {
               break;
             case "Verified pages":
               prefetchHandler = prefetchVerifiedPages;
+              break;
+            case "Single Sign-On (OIDC)":
+              prefetchHandler = prefetchOidcProviders;
               break;
             default:
               break;

@@ -36,6 +36,7 @@ const Billing = lazy(() => import("@/ee/billing/pages/billing.tsx"));
 const CloudLogin = lazy(() => import("@/ee/pages/cloud-login.tsx"));
 const CreateWorkspace = lazy(() => import("@/ee/pages/create-workspace.tsx"));
 const Security = lazy(() => import("@/ee/security/pages/security.tsx"));
+const SsoSettings = lazy(() => import("@/pages/settings/sso/sso-settings.tsx"));
 const License = lazy(() => import("@/ee/licence/pages/license.tsx"));
 const SharedPage = lazy(() => import("@/pages/share/shared-page.tsx"));
 const PdfRenderPage = lazy(() => import("@/ee/pdf-export/pdf-render-page.tsx"));
@@ -181,6 +182,7 @@ export default function App() {
             <Route path={"spaces"} element={<Spaces />} />
             <Route path={"sharing"} element={<Shares />} />
             <Route path={"security"} element={<Security />} />
+            <Route path={"sso"} element={<SsoSettings />} />
             <Route path={"ai"} element={<AiSettings />} />
             <Route path={"ai/mcp"} element={<AiSettings />} />
             <Route path={"audit"} element={<AuditLogs />} />
