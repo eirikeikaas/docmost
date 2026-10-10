@@ -7,7 +7,8 @@ import {
   InsertableAuthProvider,
   UpdatableAuthProvider,
 } from '@docmost/db/types/entity.types';
-import { AuthProviders } from '@docmost/db/types/db';
+import { AuthProviders, Json } from '@docmost/db/types/db';
+import { sql } from 'kysely';
 
 // This table is shared with EE-owned SAML/LDAP/Google provider types (its
 // `type` column is unconstrained free text, not a DB enum). Every query here
@@ -15,6 +16,16 @@ import { AuthProviders } from '@docmost/db/types/db';
 // saml_*, or oidcClientSecret columns unless explicitly requested — the
 // ldap_bind_password column in particular is stored in plaintext.
 const OIDC_PROVIDER_TYPE = 'oidc';
+
+// settings is a jsonb column; casting through text keeps arrays and nested
+// objects intact instead of relying on the driver's parameter inference.
+function toJsonbSettings<T extends { settings?: unknown }>(row: T): T {
+  if (row.settings === undefined || row.settings === null) return row;
+  return {
+    ...row,
+    settings: sql<Json>`${JSON.stringify(row.settings)}::text::jsonb`,
+  };
+}
 
 @Injectable()
 export class AuthProviderRepo {
@@ -28,6 +39,7 @@ export class AuthProviderRepo {
     'oidcClientId',
     'allowSignup',
     'isEnabled',
+    'settings',
     'creatorId',
     'workspaceId',
     'createdAt',
@@ -91,7 +103,7 @@ export class AuthProviderRepo {
     const db = dbOrTx(this.db, trx);
     return db
       .insertInto('authProviders')
-      .values({ ...insertable, type: OIDC_PROVIDER_TYPE })
+      .values({ ...toJsonbSettings(insertable), type: OIDC_PROVIDER_TYPE })
       .returning(this.baseFields)
       .executeTakeFirst();
   }
@@ -105,7 +117,7 @@ export class AuthProviderRepo {
     const db = dbOrTx(this.db, trx);
     return db
       .updateTable('authProviders')
-      .set({ ...updatable, updatedAt: new Date() })
+      .set({ ...toJsonbSettings(updatable), updatedAt: new Date() })
       .where('id', '=', id)
       .where('type', '=', OIDC_PROVIDER_TYPE)
       .where('workspaceId', '=', workspaceId)

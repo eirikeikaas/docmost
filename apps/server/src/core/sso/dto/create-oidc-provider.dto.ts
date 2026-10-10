@@ -7,8 +7,9 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
+import { OidcProviderSettingsDto } from './oidc-provider-settings.dto';
 
-export class CreateOidcProviderDto {
+export class CreateOidcProviderDto extends OidcProviderSettingsDto {
   @IsNotEmpty()
   @MinLength(1)
   @MaxLength(100)

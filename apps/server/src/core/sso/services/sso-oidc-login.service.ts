@@ -14,6 +14,13 @@ import { AuthAccountRepo } from '@docmost/db/repos/auth-provider/auth-account.re
 import { SignupService } from '../../auth/services/signup.service';
 import { SessionService } from '../../session/session.service';
 import { validateAllowedEmail } from '../../auth/auth.util';
+import { UserRole } from '../../../common/helpers/types/permission';
+import {
+  hasRequiredRole,
+  OidcMappableRole,
+  parseOidcProviderSettings,
+  resolveMappedRole,
+} from '../oidc-provider-settings';
 import { AuditEvent, AuditResource } from '../../../common/events/audit-events';
 import {
   AUDIT_SERVICE,
@@ -23,8 +30,13 @@ import {
 export interface OidcIdentity {
   providerUserId: string;
   email: string;
+  // What the IdP itself asserted (email_verified === true on the email claim).
+  // Whether an unverified email is accepted anyway is the provider's
+  // trustUnverifiedEmail setting, applied below - never decided by the caller.
   emailVerified: boolean;
   name?: string;
+  // Values of the provider's role claim; undefined/[] when the IdP sent none.
+  roles?: string[];
 }
 
 function isUserDisabled(user: User): boolean {
@@ -52,6 +64,18 @@ export class SsoOidcLoginService {
     identity: OidcIdentity,
   ): Promise<User> {
     const { providerUserId, email, emailVerified, name } = identity;
+    const settings = parseOidcProviderSettings(provider.settings);
+    const roles = identity.roles ?? [];
+
+    // 0. Role gate, on every login. A user the IdP has not assigned to this
+    // application (none of requiredRoles in the role claim) is refused before
+    // anything is looked up, linked or provisioned.
+    if (!hasRequiredRole(roles, settings.requiredRoles)) {
+      throw new ForbiddenException(
+        'Your account is not assigned a role that allows signing in to this workspace',
+      );
+    }
+    const mappedRole = resolveMappedRole(roles, settings.roleMap);
 
     // 1. Existing link for this exact external identity. Email is never
     // re-consulted once a link exists - sub is the only trust anchor from
@@ -66,14 +90,16 @@ export class SsoOidcLoginService {
       if (!user || isUserDisabled(user)) {
         throw new UnauthorizedException('This account is disabled');
       }
-      return user;
+      return this.syncMappedRole(user, mappedRole, provider, workspace);
     }
 
-    // 2. First login for this external identity. email_verified becomes
-    // load-bearing for both linking (3) and provisioning (4) below. No
-    // per-provider override in this milestone: fail closed rather than
-    // silently trust an unverified email claim.
-    if (emailVerified !== true) {
+    // 2. First login for this external identity. The email becomes
+    // load-bearing for both linking (3) and provisioning (4) below, so it must
+    // be one the IdP verified - or one the admin has explicitly told us to
+    // trust for this provider (trustUnverifiedEmail, e.g. Microsoft Entra,
+    // which never sends email_verified). Off by default: fail closed rather
+    // than silently trust an unverified email claim.
+    if (emailVerified !== true && !settings.trustUnverifiedEmail) {
       throw new UnauthorizedException(
         'Your identity provider must assert a verified email address to sign in via SSO',
       );
@@ -99,7 +125,7 @@ export class SsoOidcLoginService {
         resourceId: existingUser.id,
         metadata: { providerId: provider.id },
       });
-      return existingUser;
+      return this.syncMappedRole(existingUser, mappedRole, provider, workspace);
     }
 
     // 4. Brand-new account. This DOES grant new workspace access, so it is
@@ -111,6 +137,9 @@ export class SsoOidcLoginService {
       );
     }
     validateAllowedEmail(email, workspace);
+
+    // The role claim wins; defaultRole only applies here, to a brand-new user.
+    const initialRole = mappedRole ?? settings.defaultRole;
 
     return executeTx(this.db, async (trx) => {
       const generatedPassword = randomBytes(32).toString('base64url');
@@ -124,7 +153,11 @@ export class SsoOidcLoginService {
         trx,
       );
       await this.userRepo.updateUser(
-        { hasGeneratedPassword: true, emailVerifiedAt: new Date() },
+        {
+          hasGeneratedPassword: true,
+          emailVerifiedAt: new Date(),
+          role: initialRole,
+        },
         user.id,
         workspace.id,
         trx,
@@ -138,8 +171,41 @@ export class SsoOidcLoginService {
         },
         trx,
       );
-      return user;
+      return { ...user, role: initialRole };
     });
+  }
+
+  // Applies the roleMap result to an existing user on every login. Never
+  // assigns 'owner' (the type cannot even express it) and never touches an
+  // existing owner. When nothing matched (undefined) the user is left as is:
+  // defaultRole is for provisioning, not for demoting.
+  private async syncMappedRole(
+    user: User,
+    mappedRole: OidcMappableRole | undefined,
+    provider: AuthProvider,
+    workspace: Workspace,
+  ): Promise<User> {
+    if (
+      !mappedRole ||
+      user.role === UserRole.OWNER ||
+      (mappedRole as string) === UserRole.OWNER ||
+      user.role === mappedRole
+    ) {
+      return user;
+    }
+
+    await this.userRepo.updateUser({ role: mappedRole }, user.id, workspace.id);
+    this.auditService.log({
+      event: AuditEvent.USER_ROLE_CHANGED,
+      resourceType: AuditResource.USER,
+      resourceId: user.id,
+      changes: {
+        before: { role: user.role },
+        after: { role: mappedRole },
+      },
+      metadata: { source: 'oidc', providerId: provider.id },
+    });
+    return { ...user, role: mappedRole };
   }
 
   async issueSession(user: User): Promise<string> {
