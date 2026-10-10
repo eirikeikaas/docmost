@@ -6,8 +6,10 @@ import {
   JwtApiKeyPayload,
   JwtOAuthPayload,
   JwtPayload,
+  JwtServiceTokenPayload,
   JwtType,
 } from '../dto/jwt-payload';
+import { ServiceTokenService } from '../../service-token/service-token.service';
 import { WorkspaceRepo } from '@docmost/db/repos/workspace/workspace.repo';
 import { UserRepo } from '@docmost/db/repos/user/user.repo';
 import { UserSessionRepo } from '@docmost/db/repos/session/user-session.repo';
@@ -27,6 +29,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     private sessionActivityService: SessionActivityService,
     private readonly environmentService: EnvironmentService,
     private moduleRef: ModuleRef,
+    private readonly serviceTokenService: ServiceTokenService,
   ) {
     super({
       jwtFromRequest: (req: FastifyRequest) => {
@@ -40,7 +43,11 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
 
   async validate(
     req: any,
-    payload: JwtPayload | JwtApiKeyPayload | JwtOAuthPayload,
+    payload:
+      | JwtPayload
+      | JwtApiKeyPayload
+      | JwtOAuthPayload
+      | JwtServiceTokenPayload,
   ) {
     if (!payload.workspaceId) {
       throw new UnauthorizedException();
@@ -50,7 +57,16 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       throw new UnauthorizedException('Workspace does not match');
     }
 
-    // authType lets guards tell an interactive session from a programmatic credential.
+    // authType lets guards tell an interactive session from a programmatic
+    // credential. Service tokens are validated here, in the fork's own code,
+    // and never fall through to the enterprise-module branches below.
+    if (payload.type === JwtType.SERVICE) {
+      const { user, workspace } = await this.serviceTokenService.authenticate(
+        payload as JwtServiceTokenPayload,
+      );
+      return { user, workspace, authType: JwtType.SERVICE };
+    }
+
     if (payload.type === JwtType.API_KEY) {
       const authResult = await this.validateApiKey(
         req,

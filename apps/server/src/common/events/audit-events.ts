@@ -29,6 +29,10 @@ export const AuditEvent = {
   OAUTH_GRANT_CREATED: 'oauth_grant.created',
   OAUTH_GRANT_REVOKED: 'oauth_grant.revoked',
 
+  // Service tokens
+  SERVICE_TOKEN_CREATED: 'service_token.created',
+  SERVICE_TOKEN_REVOKED: 'service_token.revoked',
+
   // SCIM Tokens
   SCIM_TOKEN_CREATED: 'scim_token.created',
   SCIM_TOKEN_UPDATED: 'scim_token.updated',
@@ -146,6 +150,7 @@ export const AuditResource = {
   OAUTH_CLIENT: 'oauth_client',
   OAUTH_GRANT: 'oauth_grant',
   SCIM_TOKEN: 'scim_token',
+  SERVICE_TOKEN: 'service_token',
   SSO_PROVIDER: 'sso_provider',
   WORKSPACE_INVITATION: 'workspace_invitation',
   ATTACHMENT: 'attachment',
