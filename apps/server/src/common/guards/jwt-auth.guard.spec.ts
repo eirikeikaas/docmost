@@ -3,7 +3,11 @@ import {
   ForbiddenException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { JwtAuthGuard } from './jwt-auth.guard';
+import {
+  isServiceTokenDeniedPath,
+  JwtAuthGuard,
+  SERVICE_TOKEN_DENIED_PATH_PREFIXES,
+} from './jwt-auth.guard';
 import { OAUTH_SCOPE_KEY } from '../decorators/oauth-scope.decorator';
 import { REQUIRE_SESSION_AUTH_KEY } from '../decorators/require-session-auth.decorator';
 import { JwtType } from '../../core/auth/dto/jwt-payload';
@@ -182,5 +186,126 @@ describe('JwtAuthGuard.handleRequest', () => {
     expect(() =>
       guard.handleRequest(null, oauthUser(['read']), null, createCtx()),
     ).toThrow('insufficient_scope');
+  });
+});
+
+describe('JwtAuthGuard.handleRequest - service tokens', () => {
+  const serviceUser = {
+    user: { id: 'bot_1' },
+    workspace: { id: 'ws_1' },
+    authType: JwtType.SERVICE,
+  };
+
+  function ctxFor(opts: { routeUrl?: string; rawUrl?: string } = {}) {
+    return {
+      getHandler: () => handlerSentinel,
+      getClass: () => classSentinel,
+      switchToHttp: () => ({
+        getRequest: () => ({
+          routeOptions: { url: opts.routeUrl },
+          raw: { url: opts.rawUrl },
+        }),
+      }),
+    } as any;
+  }
+
+  it('is refused on a session-only route', () => {
+    const { guard } = createGuard(undefined, true);
+
+    expect(() =>
+      guard.handleRequest(null, serviceUser, null, ctxFor()),
+    ).toThrow('This action requires an interactive user session');
+  });
+
+  it('is refused on a session-only route even if it also carries a write scope', () => {
+    const { guard } = createGuard('write', true);
+
+    expect(() =>
+      guard.handleRequest(null, serviceUser, null, ctxFor()),
+    ).toThrow(ForbiddenException);
+  });
+
+  it('keeps working on an ordinary route', () => {
+    const { guard } = createGuard(undefined, undefined);
+
+    expect(
+      guard.handleRequest(
+        null,
+        serviceUser,
+        null,
+        ctxFor({ routeUrl: '/api/pages/info', rawUrl: '/api/pages/info' }),
+      ),
+    ).toBe(serviceUser);
+  });
+
+  it('is not subject to the oauth scope rules', () => {
+    // No @OAuthScope metadata anywhere: an oauth token would be refused, a
+    // service token (which has no `oauth` property) is not.
+    const { guard } = createGuard(undefined, undefined);
+
+    expect(
+      guard.handleRequest(null, serviceUser, null, ctxFor({ routeUrl: '/api/x' })),
+    ).toBe(serviceUser);
+  });
+
+  it.each([
+    '/api/mfa/setup',
+    '/api/mfa',
+    '/api/api-keys/create',
+    '/api/oauth/grants',
+  ])('is refused on the enterprise credential route %s', (routeUrl) => {
+    const { guard } = createGuard(undefined, undefined);
+
+    expect(() =>
+      guard.handleRequest(null, serviceUser, null, ctxFor({ routeUrl })),
+    ).toThrow('This action cannot be performed with a service token');
+  });
+
+  it.each([
+    '//api//mfa/verify',
+    '/API/MFA/verify',
+    '/api/mfa/../mfa/enable',
+    '/api/mfa?x=1',
+    '/api/api-keys/',
+  ])('is refused when the raw request path is %s', (rawUrl) => {
+    const { guard } = createGuard(undefined, undefined);
+
+    expect(() =>
+      guard.handleRequest(null, serviceUser, null, ctxFor({ rawUrl })),
+    ).toThrow(ForbiddenException);
+  });
+
+  it('does not refuse look-alike paths', () => {
+    const { guard } = createGuard(undefined, undefined);
+
+    for (const routeUrl of ['/api/mfa-notes', '/api/pages/mfa', '/api/oauthish']) {
+      expect(
+        guard.handleRequest(null, serviceUser, null, ctxFor({ routeUrl })),
+      ).toBe(serviceUser);
+    }
+  });
+
+  it('only applies the path denial to service tokens', () => {
+    const { guard } = createGuard(undefined, undefined);
+    const session = { ...serviceUser, authType: JwtType.ACCESS };
+
+    expect(
+      guard.handleRequest(
+        null,
+        session,
+        null,
+        ctxFor({ routeUrl: '/api/mfa/setup', rawUrl: '/api/mfa/setup' }),
+      ),
+    ).toBe(session);
+  });
+
+  it('exposes the denied prefixes it enforces', () => {
+    expect(SERVICE_TOKEN_DENIED_PATH_PREFIXES).toEqual([
+      '/api/mfa',
+      '/api/api-keys',
+      '/api/oauth',
+    ]);
+    expect(isServiceTokenDeniedPath('/api/mfa/x')).toBe(true);
+    expect(isServiceTokenDeniedPath(undefined)).toBe(false);
   });
 });

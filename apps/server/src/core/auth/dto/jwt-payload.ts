@@ -8,6 +8,7 @@ export enum JwtType {
   PDF_RENDER = 'pdf_render',
   PDF_EXPORT_DOWNLOAD = 'pdf_export_download',
   OAUTH_ACCESS = 'oauth_access',
+  SERVICE = 'service',
 }
 export type JwtPayload = {
   sub: string;
@@ -47,6 +48,15 @@ export type JwtApiKeyPayload = {
   workspaceId: string;
   apiKeyId: string;
   type: 'api_key';
+};
+
+// Bearer credential of a service-account user (core/service-token). The row in
+// service_tokens (serviceTokenId) is what makes it revocable.
+export type JwtServiceTokenPayload = {
+  sub: string;
+  workspaceId: string;
+  serviceTokenId: string;
+  type: 'service';
 };
 
 export type JwtPdfRenderPayload = {

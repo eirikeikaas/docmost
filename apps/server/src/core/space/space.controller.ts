@@ -35,6 +35,7 @@ import {
 } from '../casl/interfaces/workspace-ability.type';
 import WorkspaceAbilityFactory from '../casl/abilities/workspace-ability.factory';
 import { CreateSpaceDto } from './dto/create-space.dto';
+import { RequireSessionAuth } from '../../common/decorators/require-session-auth.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('spaces')
@@ -167,6 +168,7 @@ export class SpaceController {
 
   @HttpCode(HttpStatus.OK)
   @Post('delete')
+  @RequireSessionAuth()
   async deleteSpace(
     @Body() spaceIdDto: SpaceIdDto,
     @AuthUser() user: User,
@@ -209,6 +211,7 @@ export class SpaceController {
 
   @HttpCode(HttpStatus.OK)
   @Post('members/add')
+  @RequireSessionAuth()
   async addSpaceMember(
     @Body() dto: AddSpaceMembersDto,
     @AuthUser() user: User,
@@ -235,6 +238,7 @@ export class SpaceController {
 
   @HttpCode(HttpStatus.OK)
   @Post('members/remove')
+  @RequireSessionAuth()
   async removeSpaceMember(
     @Body() dto: RemoveSpaceMemberDto,
     @AuthUser() user: User,
@@ -252,6 +256,7 @@ export class SpaceController {
 
   @HttpCode(HttpStatus.OK)
   @Post('members/change-role')
+  @RequireSessionAuth()
   async updateSpaceMemberRole(
     @Body() dto: UpdateSpaceMemberRoleDto,
     @AuthUser() user: User,

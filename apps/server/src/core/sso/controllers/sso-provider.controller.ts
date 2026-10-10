@@ -20,8 +20,10 @@ import { SsoProviderService } from '../services/sso-provider.service';
 import { CreateOidcProviderDto } from '../dto/create-oidc-provider.dto';
 import { UpdateOidcProviderDto } from '../dto/update-oidc-provider.dto';
 import { OidcProviderIdDto } from '../dto/oidc-provider-id.dto';
+import { RequireSessionAuth } from '../../../common/decorators/require-session-auth.decorator';
 
 @UseGuards(JwtAuthGuard)
+@RequireSessionAuth()
 @Controller('sso/oidc/providers')
 export class SsoProviderController {
   constructor(

@@ -15,8 +15,10 @@ import { AuthWorkspace } from '../../common/decorators/auth-workspace.decorator'
 import { User, Workspace } from '@docmost/db/types/entity.types';
 import { RevokeSessionDto } from './dto/revoke-session.dto';
 import { FastifyRequest } from 'fastify';
+import { RequireSessionAuth } from '../../common/decorators/require-session-auth.decorator';
 
 @UseGuards(JwtAuthGuard)
+@RequireSessionAuth()
 @Controller('sessions')
 export class SessionController {
   constructor(private readonly sessionService: SessionService) {}

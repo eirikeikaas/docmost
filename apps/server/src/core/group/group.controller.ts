@@ -24,6 +24,7 @@ import {
   WorkspaceCaslAction,
   WorkspaceCaslSubject,
 } from '../casl/interfaces/workspace-ability.type';
+import { RequireSessionAuth } from '../../common/decorators/require-session-auth.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('groups')
@@ -65,6 +66,7 @@ export class GroupController {
 
   @HttpCode(HttpStatus.OK)
   @Post('create')
+  @RequireSessionAuth()
   createGroup(
     @Body() createGroupDto: CreateGroupDto,
     @AuthUser() user: User,
@@ -81,6 +83,7 @@ export class GroupController {
 
   @HttpCode(HttpStatus.OK)
   @Post('update')
+  @RequireSessionAuth()
   updateGroup(
     @Body() updateGroupDto: UpdateGroupDto,
     @AuthUser() user: User,
@@ -118,6 +121,7 @@ export class GroupController {
 
   @HttpCode(HttpStatus.OK)
   @Post('members/add')
+  @RequireSessionAuth()
   addGroupMember(
     @Body() addGroupUserDto: AddGroupUserDto,
     @AuthUser() user: User,
@@ -139,6 +143,7 @@ export class GroupController {
 
   @HttpCode(HttpStatus.OK)
   @Post('members/remove')
+  @RequireSessionAuth()
   removeGroupMember(
     @Body() removeGroupUserDto: RemoveGroupUserDto,
     @AuthUser() user: User,
@@ -160,6 +165,7 @@ export class GroupController {
 
   @HttpCode(HttpStatus.OK)
   @Post('delete')
+  @RequireSessionAuth()
   deleteGroup(
     @Body() groupIdDto: GroupIdDto,
     @AuthUser() user: User,

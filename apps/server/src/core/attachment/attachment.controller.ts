@@ -67,6 +67,7 @@ import {
   AUDIT_SERVICE,
   IAuditService,
 } from '../../integrations/audit/audit.service';
+import { RequireSessionAuth } from '../../common/decorators/require-session-auth.decorator';
 
 @Controller()
 export class AttachmentController {
@@ -273,6 +274,7 @@ export class AttachmentController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post('attachments/upload-image')
+  @RequireSessionAuth()
   @UseInterceptors(FileInterceptor)
   async uploadAvatarOrLogo(
     @Req() req: any,
@@ -460,6 +462,7 @@ export class AttachmentController {
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post('attachments/remove-icon')
+  @RequireSessionAuth()
   async removeIcon(
     @Body() dto: RemoveIconDto,
     @AuthUser() user: User,

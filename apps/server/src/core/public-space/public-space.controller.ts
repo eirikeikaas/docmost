@@ -38,6 +38,7 @@ import {
   IAuditService,
 } from '../../integrations/audit/audit.service';
 import { Feature, FeatureKey } from '../../common/features';
+import { RequireSessionAuth } from '../../common/decorators/require-session-auth.decorator';
 
 const PUBLIC_SPACE_FEATURES: FeatureKey[] = [Feature.PUBLIC_SPACE_APPEARANCE];
 
@@ -189,6 +190,7 @@ export class PublicSpaceController {
 
   @HttpCode(HttpStatus.OK)
   @Post('/publish')
+  @RequireSessionAuth()
   async publish(
     @Body() dto: PublishSpaceDto,
     @AuthUser() user: User,

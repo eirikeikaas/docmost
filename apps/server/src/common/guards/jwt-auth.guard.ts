@@ -17,6 +17,40 @@ import { Reflector } from '@nestjs/core';
 import { EnvironmentService } from '../../integrations/environment/environment.service';
 import { addDays } from 'date-fns';
 
+// Route families that belong to enterprise modules, which are not part of this
+// repository's open-source tree and so cannot carry @RequireSessionAuth() from
+// here: MFA, API-key and OAuth-grant management. A service token is refused on
+// them outright, whatever those modules declare - minting or altering
+// credentials is never something a credential may do. Matched against the
+// registered route and the normalised request path, so "//api//mfa" and
+// "/API/MFA" are caught as well.
+export const SERVICE_TOKEN_DENIED_PATH_PREFIXES: readonly string[] = [
+  '/api/mfa',
+  '/api/api-keys',
+  '/api/oauth',
+];
+
+function normalizePath(path: unknown): string {
+  if (typeof path !== 'string') return '';
+  return (
+    '/' +
+    path
+      .split('?')[0]
+      .split('#')[0]
+      .toLowerCase()
+      .split('/')
+      .filter(Boolean)
+      .join('/')
+  );
+}
+
+export function isServiceTokenDeniedPath(path: unknown): boolean {
+  const normalized = normalizePath(path);
+  return SERVICE_TOKEN_DENIED_PATH_PREFIXES.some(
+    (prefix) => normalized === prefix || normalized.startsWith(prefix + '/'),
+  );
+}
+
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
   private logger = new Logger('JwtAuthGuard');
@@ -57,6 +91,21 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       throw new ForbiddenException(
         'This action requires an interactive user session',
       );
+    }
+
+    if (user.authType === JwtType.SERVICE) {
+      const request = ctx.switchToHttp?.()?.getRequest?.();
+      if (
+        isServiceTokenDeniedPath(request?.routeOptions?.url) ||
+        isServiceTokenDeniedPath(request?.raw?.url ?? request?.url)
+      ) {
+        this.logger.debug(
+          `service token refused on ${ctx.getClass()?.name}.${ctx.getHandler()?.name}`,
+        );
+        throw new ForbiddenException(
+          'This action cannot be performed with a service token',
+        );
+      }
     }
 
     if (user.oauth) {

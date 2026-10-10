@@ -37,9 +37,11 @@ import {
   AUDIT_SERVICE,
   IAuditService,
 } from '../../integrations/audit/audit.service';
+import { RequireSessionAuth } from '../../common/decorators/require-session-auth.decorator';
 
 @SkipThrottle({ ...ALL_NAMED_THROTTLERS_SKIPPED, [AUTH_THROTTLER]: false })
 @UseGuards(ThrottlerGuard)
+@RequireSessionAuth()
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);

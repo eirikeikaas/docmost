@@ -37,6 +37,7 @@ import { LicenseCheckService } from '../../../integrations/environment/license-c
 import { CheckHostnameDto } from '../dto/check-hostname.dto';
 import { RemoveWorkspaceUserDto } from '../dto/remove-workspace-user.dto';
 import { WorkspaceRepo } from '@docmost/db/repos/workspace/workspace.repo';
+import { RequireSessionAuth } from '../../../common/decorators/require-session-auth.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('workspace')
@@ -83,6 +84,7 @@ export class WorkspaceController {
 
   @HttpCode(HttpStatus.OK)
   @Post('update')
+  @RequireSessionAuth()
   async updateWorkspace(
     @Res({ passthrough: true }) res: FastifyReply,
     @Body() dto: UpdateWorkspaceDto,
@@ -132,6 +134,7 @@ export class WorkspaceController {
 
   @HttpCode(HttpStatus.OK)
   @Post('members/deactivate')
+  @RequireSessionAuth()
   async deactivateWorkspaceMember(
     @Body() dto: RemoveWorkspaceUserDto,
     @AuthUser() user: User,
@@ -148,6 +151,7 @@ export class WorkspaceController {
 
   @HttpCode(HttpStatus.OK)
   @Post('members/activate')
+  @RequireSessionAuth()
   async activateWorkspaceMember(
     @Body() dto: RemoveWorkspaceUserDto,
     @AuthUser() user: User,
@@ -164,6 +168,7 @@ export class WorkspaceController {
 
   @HttpCode(HttpStatus.OK)
   @Post('members/delete')
+  @RequireSessionAuth()
   async deleteWorkspaceMember(
     @Body() dto: RemoveWorkspaceUserDto,
     @AuthUser() user: User,
@@ -180,6 +185,7 @@ export class WorkspaceController {
 
   @HttpCode(HttpStatus.OK)
   @Post('members/change-role')
+  @RequireSessionAuth()
   async updateWorkspaceMemberRole(
     @Body() workspaceUserRoleDto: UpdateWorkspaceUserRoleDto,
     @AuthUser() user: User,
@@ -201,6 +207,7 @@ export class WorkspaceController {
 
   @HttpCode(HttpStatus.OK)
   @Post('invites')
+  @RequireSessionAuth()
   async getInvitations(
     @AuthUser() user: User,
     @AuthWorkspace() workspace: Workspace,
@@ -233,6 +240,7 @@ export class WorkspaceController {
 
   @HttpCode(HttpStatus.OK)
   @Post('invites/create')
+  @RequireSessionAuth()
   async inviteUser(
     @Body() inviteUserDto: InviteUserDto,
     @AuthUser() user: User,
@@ -254,6 +262,7 @@ export class WorkspaceController {
 
   @HttpCode(HttpStatus.OK)
   @Post('invites/resend')
+  @RequireSessionAuth()
   async resendInvite(
     @Body() revokeInviteDto: RevokeInviteDto,
     @AuthUser() user: User,
@@ -274,6 +283,7 @@ export class WorkspaceController {
 
   @HttpCode(HttpStatus.OK)
   @Post('invites/revoke')
+  @RequireSessionAuth()
   async revokeInvite(
     @Body() revokeInviteDto: RevokeInviteDto,
     @AuthUser() user: User,
@@ -332,6 +342,7 @@ export class WorkspaceController {
 
   @HttpCode(HttpStatus.OK)
   @Post('invites/link')
+  @RequireSessionAuth()
   async getInviteLink(
     @Body() inviteDto: InvitationIdDto,
     @AuthUser() user: User,
