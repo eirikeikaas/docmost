@@ -35,6 +35,8 @@ import {
 } from '../casl/interfaces/workspace-ability.type';
 import WorkspaceAbilityFactory from '../casl/abilities/workspace-ability.factory';
 import { CreateSpaceDto } from './dto/create-space.dto';
+import { ListSpaceDecisionsDto } from './dto/list-space-decisions.dto';
+import { DecisionService } from './services/decision.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('spaces')
@@ -45,6 +47,7 @@ export class SpaceController {
     private readonly spaceMemberRepo: SpaceMemberRepo,
     private readonly spaceAbility: SpaceAbilityFactory,
     private readonly workspaceAbility: WorkspaceAbilityFactory,
+    private readonly decisionService: DecisionService,
   ) {}
 
   @HttpCode(HttpStatus.OK)
@@ -128,6 +131,34 @@ export class SpaceController {
     };
 
     return { ...space, membership };
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('decisions')
+  @OAuthScope('read')
+  async listSpaceDecisions(
+    @Body() dto: ListSpaceDecisionsDto,
+    @AuthUser() user: User,
+    @AuthWorkspace() workspace: Workspace,
+  ) {
+    const space = await this.spaceService.getSpaceInfo(
+      dto.spaceId,
+      workspace.id,
+    );
+
+    if (!space) {
+      throw new NotFoundException('Space not found');
+    }
+
+    const ability = await this.spaceAbility.createForUser(user, space.id);
+    if (ability.cannot(SpaceCaslAction.Read, SpaceCaslSubject.Page)) {
+      throw new ForbiddenException();
+    }
+
+    return this.decisionService.listSpaceDecisions(space.id, workspace.id, {
+      status: dto.status,
+      limit: dto.limit,
+    });
   }
 
   @HttpCode(HttpStatus.OK)

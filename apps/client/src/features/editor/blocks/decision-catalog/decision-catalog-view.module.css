@@ -1,0 +1,15 @@
+.root {
+  background: light-dark(
+    var(--mantine-color-gray-0),
+    var(--mantine-color-dark-6)
+  );
+}
+
+.status {
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.decisionText {
+  word-break: break-word;
+}

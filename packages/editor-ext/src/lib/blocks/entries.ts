@@ -2,10 +2,14 @@
  * Side-effect entry point for first-party schema block modules.
  *
  * Import schema block files here so `registerSchemaBlock(...)` runs when
- * the schema registry is loaded (client or collab server). Example:
+ * the schema registry is loaded (client or collab server).
  *
- *   import "../poll/poll";
- *
- * Keep this module free of React and client-only code.
+ * Keep this module free of React and client-only code beyond what the
+ * TipTap node modules already import.
  */
-export {};
+import { Decision } from "../decision/decision";
+import { DecisionCatalog } from "../decision/decision-catalog";
+import { registerSchemaBlock } from "./registry";
+
+registerSchemaBlock(Decision);
+registerSchemaBlock(DecisionCatalog);

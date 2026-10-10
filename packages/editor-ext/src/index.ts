@@ -40,3 +40,4 @@ export {
 } from "./lib/prosemirror-docx";
 export * from "./lib/base-embed";
 export * from "./lib/blocks";
+export * from "./lib/decision";
