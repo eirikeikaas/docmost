@@ -70,6 +70,21 @@ export class GroupRepo {
       .executeTakeFirst();
   }
 
+  // Unpaginated - for SCIM egress, which fetches the full set and filters
+  // in-memory rather than translating SCIM filter expressions into SQL.
+  async findAllByWorkspaceId(
+    workspaceId: string,
+    opts?: { trx?: KyselyTransaction },
+  ): Promise<Group[]> {
+    const db = dbOrTx(this.db, opts?.trx);
+    return db
+      .selectFrom('groups')
+      .select(this.baseFields)
+      .select('scimExternalId')
+      .where('workspaceId', '=', workspaceId)
+      .execute();
+  }
+
   async update(
     updatableGroup: UpdatableGroup,
     groupId: string,
