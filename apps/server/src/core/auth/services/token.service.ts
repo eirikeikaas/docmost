@@ -15,6 +15,7 @@ import {
   JwtPayload,
   JwtPdfExportDownloadPayload,
   JwtPdfRenderPayload,
+  JwtServiceTokenPayload,
   JwtType,
 } from '../dto/jwt-payload';
 import { User } from '@docmost/db/types/entity.types';
@@ -115,6 +116,36 @@ export class TokenService {
     };
 
     return this.jwtService.sign(payload, expiresIn ? { expiresIn } : {});
+  }
+
+  // Signs a service token that expires exactly when its database row does.
+  // The explicit expiry overrides the module-wide default, so a token can never
+  // outlive the row that governs it.
+  async generateServiceToken(opts: {
+    serviceTokenId: string;
+    user: User;
+    workspaceId: string;
+    expiresAt: Date;
+  }): Promise<string> {
+    const { serviceTokenId, user, workspaceId, expiresAt } = opts;
+    if (isUserDisabled(user)) {
+      throw new ForbiddenException();
+    }
+
+    const expiresInSeconds = Math.floor(
+      (expiresAt.getTime() - Date.now()) / 1000,
+    );
+    if (expiresInSeconds < 1) {
+      throw new ForbiddenException('Service token expiry is in the past');
+    }
+
+    const payload: JwtServiceTokenPayload = {
+      sub: user.id,
+      workspaceId,
+      serviceTokenId,
+      type: JwtType.SERVICE,
+    };
+    return this.jwtService.sign(payload, { expiresIn: expiresInSeconds });
   }
 
   async generatePdfRenderToken(

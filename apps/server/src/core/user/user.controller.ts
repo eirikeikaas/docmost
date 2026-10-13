@@ -14,6 +14,7 @@ import { OAuthScope } from '../../common/decorators/oauth-scope.decorator';
 import { AuthWorkspace } from '../../common/decorators/auth-workspace.decorator';
 import { User, Workspace } from '@docmost/db/types/entity.types';
 import { WorkspaceRepo } from '@docmost/db/repos/workspace/workspace.repo';
+import { RequireSessionAuth } from '../../common/decorators/require-session-auth.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('users')
@@ -46,6 +47,7 @@ export class UserController {
 
   @HttpCode(HttpStatus.OK)
   @Post('update')
+  @RequireSessionAuth()
   async updateUser(
     @Body() updateUserDto: UpdateUserDto,
     @AuthUser() user: User,

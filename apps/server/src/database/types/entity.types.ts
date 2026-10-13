@@ -38,6 +38,7 @@ import {
   UserSessions,
   ApiKeys,
   ScimTokens,
+  ServiceTokens,
   SiemDestinations,
   Watchers,
   Audit as _Audit,
@@ -194,6 +195,11 @@ export type UpdatableApiKey = Updateable<Omit<ApiKeys, 'id'>>;
 export type ScimToken = Selectable<ScimTokens>;
 export type InsertableScimToken = Insertable<ScimTokens>;
 export type UpdatableScimToken = Updateable<Omit<ScimTokens, 'id'>>;
+
+// Service tokens
+export type ServiceToken = Selectable<ServiceTokens>;
+export type InsertableServiceToken = Insertable<ServiceTokens>;
+export type UpdatableServiceToken = Updateable<Omit<ServiceTokens, 'id'>>;
 
 // OAuth
 export type OAuthClient = Selectable<OauthClients>;

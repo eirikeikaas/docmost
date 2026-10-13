@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { SsoProviderService } from './sso-provider.service';
 
 const workspace: any = { id: 'ws_1' };
@@ -160,5 +160,248 @@ describe('SsoProviderService', () => {
       workspace.id,
     );
     expect(oidcClientRegistry.invalidate).toHaveBeenCalledWith('provider_1');
+  });
+});
+
+describe('SsoProviderService - per-provider settings', () => {
+  const baseRow = {
+    id: 'provider_1',
+    name: 'Microsoft Entra ID',
+    type: 'oidc',
+    oidcIssuer: 'https://login.microsoftonline.com/tenant/v2.0',
+    oidcClientId: 'client-id',
+    allowSignup: true,
+    isEnabled: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  it('exposes the defaults for a provider with no stored settings, and never the secret', async () => {
+    const { service } = createService({
+      authProviderRepo: {
+        findByWorkspaceId: jest
+          .fn()
+          .mockResolvedValue([{ ...baseRow, settings: null }]),
+      },
+    });
+
+    const [view] = await service.list(workspace.id);
+
+    expect(view).toMatchObject({
+      trustUnverifiedEmail: false,
+      roleClaim: 'roles',
+      roleMap: {},
+      defaultRole: 'member',
+      requiredRoles: [],
+    });
+    expect(view).not.toHaveProperty('oidcClientSecret');
+    expect(view).not.toHaveProperty('settings');
+  });
+
+  it('exposes stored settings in the list response', async () => {
+    const { service } = createService({
+      authProviderRepo: {
+        findByWorkspaceId: jest.fn().mockResolvedValue([
+          {
+            ...baseRow,
+            settings: {
+              trustUnverifiedEmail: true,
+              roleClaim: 'groups',
+              roleMappings: [
+                { claimValue: 'agents_admin', role: 'admin' },
+                { claimValue: 'bad', role: 'owner' },
+              ],
+              defaultRole: 'admin',
+              requiredRoles: ['agents_admin'],
+            },
+          },
+        ]),
+      },
+    });
+
+    const [view] = await service.list(workspace.id);
+
+    expect(view).toMatchObject({
+      trustUnverifiedEmail: true,
+      roleClaim: 'groups',
+      roleMap: { agents_admin: 'admin' },
+      defaultRole: 'admin',
+      requiredRoles: ['agents_admin'],
+    });
+  });
+
+  it('stores the settings on create and returns them', async () => {
+    const insertOidcProvider = jest.fn().mockImplementation(async (row) => ({
+      ...baseRow,
+      settings: row.settings,
+    }));
+    const { service } = createService({
+      authProviderRepo: { insertOidcProvider },
+    });
+
+    const view = await service.create(
+      {
+        name: 'Microsoft Entra ID',
+        oidcIssuer: baseRow.oidcIssuer,
+        oidcClientId: 'client-id',
+        oidcClientSecret: 'super-secret',
+        trustUnverifiedEmail: true,
+        roleMap: { agents_admin: 'admin' },
+        requiredRoles: ['agents_admin'],
+      } as any,
+      user,
+      workspace,
+    );
+
+    expect(insertOidcProvider).toHaveBeenCalledWith(
+      expect.objectContaining({
+        settings: expect.objectContaining({
+          trustUnverifiedEmail: true,
+          roleMappings: [{ claimValue: 'agents_admin', role: 'admin' }],
+          requiredRoles: ['agents_admin'],
+          roleClaim: 'roles',
+          defaultRole: 'member',
+        }),
+      }),
+    );
+    expect(view.trustUnverifiedEmail).toBe(true);
+    expect(view.roleMap).toEqual({ agents_admin: 'admin' });
+  });
+
+  it('does not write settings on create when none were supplied', async () => {
+    const insertOidcProvider = jest.fn().mockResolvedValue(baseRow);
+    const { service } = createService({
+      authProviderRepo: { insertOidcProvider },
+    });
+
+    await service.create(
+      {
+        name: 'Okta',
+        oidcIssuer: 'https://idp.example.com',
+        oidcClientId: 'client-id',
+        oidcClientSecret: 'secret',
+      } as any,
+      user,
+      workspace,
+    );
+
+    expect(insertOidcProvider.mock.calls[0][0]).not.toHaveProperty('settings');
+  });
+
+  it('merges a settings change on update without dropping what was not sent', async () => {
+    const existing = {
+      ...baseRow,
+      settings: {
+        roleClaim: 'groups',
+        roleMappings: [{ claimValue: 'agents_admin', role: 'admin' }],
+        somethingElse: 'keep',
+      },
+    };
+    const updateOidcProvider = jest
+      .fn()
+      .mockImplementation(async (_id, _ws, patch) => ({
+        ...existing,
+        settings: patch.settings,
+      }));
+    const { service } = createService({
+      authProviderRepo: {
+        findById: jest.fn().mockResolvedValue(existing),
+        updateOidcProvider,
+      },
+    });
+
+    const view = await service.update(
+      { id: 'provider_1', trustUnverifiedEmail: true } as any,
+      workspace,
+    );
+
+    expect(updateOidcProvider).toHaveBeenCalledWith(
+      'provider_1',
+      workspace.id,
+      {
+        settings: {
+          somethingElse: 'keep',
+          trustUnverifiedEmail: true,
+          roleClaim: 'groups',
+          roleMappings: [{ claimValue: 'agents_admin', role: 'admin' }],
+          defaultRole: 'member',
+          requiredRoles: [],
+        },
+      },
+    );
+    expect(view.roleClaim).toBe('groups');
+    expect(view.trustUnverifiedEmail).toBe(true);
+  });
+
+  it('lets an update clear roleMap and requiredRoles', async () => {
+    const existing = {
+      ...baseRow,
+      settings: {
+        roleMappings: [{ claimValue: 'a', role: 'admin' }],
+        requiredRoles: ['a'],
+      },
+    };
+    const updateOidcProvider = jest
+      .fn()
+      .mockImplementation(async (_id, _ws, patch) => ({
+        ...existing,
+        settings: patch.settings,
+      }));
+    const { service } = createService({
+      authProviderRepo: {
+        findById: jest.fn().mockResolvedValue(existing),
+        updateOidcProvider,
+      },
+    });
+
+    const view = await service.update(
+      { id: 'provider_1', roleMap: {}, requiredRoles: [] } as any,
+      workspace,
+    );
+
+    expect(view.roleMap).toEqual({});
+    expect(view.requiredRoles).toEqual([]);
+  });
+
+  it.each(['common', 'organizations', 'consumers'])(
+    'refuses a multi-tenant Entra issuer (%s) on create',
+    async (tenant) => {
+      const { service, authProviderRepo } = createService();
+
+      await expect(
+        service.create(
+          {
+            name: 'Entra',
+            oidcIssuer: `https://login.microsoftonline.com/${tenant}/v2.0`,
+            oidcClientId: 'client-id',
+            oidcClientSecret: 'secret',
+          } as any,
+          user,
+          workspace,
+        ),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(authProviderRepo.insertOidcProvider).not.toHaveBeenCalled();
+    },
+  );
+
+  it('refuses a multi-tenant Entra issuer on update', async () => {
+    const { service, authProviderRepo } = createService({
+      authProviderRepo: {
+        findById: jest.fn().mockResolvedValue({ ...baseRow, settings: {} }),
+      },
+    });
+
+    await expect(
+      service.update(
+        {
+          id: 'provider_1',
+          oidcIssuer: 'https://login.microsoftonline.com/common/v2.0',
+        } as any,
+        workspace,
+      ),
+    ).rejects.toThrow(BadRequestException);
+
+    expect(authProviderRepo.updateOidcProvider).not.toHaveBeenCalled();
   });
 });

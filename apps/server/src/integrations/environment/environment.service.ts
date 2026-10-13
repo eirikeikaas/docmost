@@ -396,4 +396,55 @@ export class EnvironmentService {
   getAllowedPrivateNetworks(): string {
     return this.configService.get<string>('ALLOWED_PRIVATE_NETWORKS', 'none');
   }
+
+  // Microsoft Entra ID bootstrap (self-hosted only): all three of tenant id,
+  // client id and client secret must be set for a provider to be created. A
+  // blank value counts as unset.
+  getSsoOidcEntraTenantId(): string | undefined {
+    return this.getOptionalTrimmed('SSO_OIDC_ENTRA_TENANT_ID');
+  }
+
+  getSsoOidcEntraClientId(): string | undefined {
+    return this.getOptionalTrimmed('SSO_OIDC_ENTRA_CLIENT_ID');
+  }
+
+  getSsoOidcEntraClientSecret(): string | undefined {
+    return this.getOptionalTrimmed('SSO_OIDC_ENTRA_CLIENT_SECRET');
+  }
+
+  getSsoOidcEntraDisplayName(): string {
+    return (
+      this.getOptionalTrimmed('SSO_OIDC_ENTRA_DISPLAY_NAME') ??
+      'Microsoft Entra ID'
+    );
+  }
+
+  getSsoOidcEntraAllowSignup(): boolean {
+    const raw = this.getOptionalTrimmed('SSO_OIDC_ENTRA_ALLOW_SIGNUP');
+    return raw === undefined ? true : raw.toLowerCase() === 'true';
+  }
+
+  // Raw "claimValue=admin|member,..." string; parsed by the SSO bootstrap.
+  getSsoOidcEntraRoleMap(): string {
+    return this.getOptionalTrimmed('SSO_OIDC_ENTRA_ROLE_MAP') ?? '';
+  }
+
+  getSsoOidcEntraRequiredRoles(): string[] {
+    const raw = this.getOptionalTrimmed('SSO_OIDC_ENTRA_REQUIRED_ROLES') ?? '';
+    return [
+      ...new Set(
+        raw
+          .split(',')
+          .map((role) => role.trim())
+          .filter(Boolean),
+      ),
+    ];
+  }
+
+  private getOptionalTrimmed(key: string): string | undefined {
+    const value = this.configService.get<string>(key);
+    if (typeof value !== 'string') return undefined;
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }
 }

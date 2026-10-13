@@ -33,7 +33,12 @@ import { EnvironmentService } from '../../../integrations/environment/environmen
 import { EncryptionService } from '../../../integrations/encryption/encryption.service';
 import { OidcClientRegistryService } from '../services/oidc-client-registry.service';
 import { SsoOidcLoginService } from '../services/sso-oidc-login.service';
-import { isSafeRedirectPath } from '../sso.util';
+import {
+  extractClaimValues,
+  isSafeRedirectPath,
+  resolveEmailFromClaims,
+} from '../sso.util';
+import { parseOidcProviderSettings } from '../oidc-provider-settings';
 import { OIDC_STATE_COOKIE, OIDC_STATE_TTL_SECONDS } from '../sso.constants';
 
 interface OidcStatePayload {
@@ -184,28 +189,44 @@ export class SsoOidcController {
       throw new BadRequestException('SSO login failed');
     }
 
-    let profile: Record<string, any> = idClaims;
+    let userInfo: Record<string, any> | undefined;
     try {
-      profile = (await fetchUserInfo(
+      userInfo = (await fetchUserInfo(
         config,
         tokens.access_token,
         idClaims.sub,
       )) as Record<string, any>;
     } catch {
-      // Some IdPs have no userinfo endpoint - fall back to ID token claims.
+      // Some IdPs have no userinfo endpoint (or, like Microsoft Entra, return
+      // a different sub for it) - the signed ID token claims are enough.
     }
 
-    const email = String(profile.email ?? idClaims.email ?? '')
-      .toLowerCase()
-      .trim();
-    if (!email) {
+    // `email` first, then - for IdPs such as Microsoft Entra that often omit it
+    // from the ID token - preferred_username and upn, accepting only values
+    // that look like an address.
+    const resolvedEmail = resolveEmailFromClaims([userInfo, idClaims]);
+    if (!resolvedEmail) {
       throw new BadRequestException(
         'Your identity provider did not share an email address',
       );
     }
+    const { email } = resolvedEmail;
+    // email_verified describes the `email` claim only; an address taken from
+    // preferred_username/upn is never "verified" by the IdP. Whether such an
+    // address is accepted anyway is the provider's trustUnverifiedEmail
+    // setting, enforced in the login service.
     const emailVerified =
-      (profile.email_verified ?? idClaims.email_verified) === true;
-    const name = (profile.name ?? idClaims.name) as string | undefined;
+      resolvedEmail.claim === 'email' &&
+      (userInfo?.email_verified ?? idClaims.email_verified) === true;
+    const name = (userInfo?.name ?? idClaims.name) as string | undefined;
+
+    // Roles come from the signed ID token; userinfo is consulted only when the
+    // ID token does not carry the claim at all.
+    const { roleClaim } = parseOidcProviderSettings(provider.settings);
+    const roles =
+      extractClaimValues(idClaims, roleClaim) ??
+      extractClaimValues(userInfo, roleClaim) ??
+      [];
 
     const user = await this.ssoOidcLoginService.resolveOrProvisionUser(
       provider,
@@ -215,6 +236,7 @@ export class SsoOidcController {
         email,
         emailVerified,
         name,
+        roles,
       },
     );
 

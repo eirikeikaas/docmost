@@ -1,4 +1,9 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { AuthProviderRepo } from '@docmost/db/repos/auth-provider/auth-provider.repo';
 import { AuthProvider } from '@docmost/db/types/entity.types';
 import { EncryptionService } from '../../../integrations/encryption/encryption.service';
@@ -11,6 +16,13 @@ import {
   IAuditService,
 } from '../../../integrations/audit/audit.service';
 import { OidcClientRegistryService } from './oidc-client-registry.service';
+import {
+  mergeOidcProviderSettings,
+  OidcMappableRole,
+  OidcProviderSettings,
+  parseOidcProviderSettings,
+} from '../oidc-provider-settings';
+import { isMultiTenantEntraIssuer } from '../entra.util';
 
 // A provider always has a secret from the moment it's created - the create
 // DTO requires one and the update DTO has no way to null it back out - so
@@ -26,11 +38,18 @@ export interface OidcProviderView {
   hasClientSecret: boolean;
   allowSignup: boolean;
   isEnabled: boolean;
+  // Per-provider options (auth_providers.settings), always fully populated.
+  trustUnverifiedEmail: boolean;
+  roleClaim: string;
+  roleMap: Record<string, OidcMappableRole>;
+  defaultRole: OidcMappableRole;
+  requiredRoles: string[];
   createdAt: Date;
   updatedAt: Date;
 }
 
 function toView(provider: AuthProvider): OidcProviderView {
+  const settings = parseOidcProviderSettings(provider.settings);
   return {
     id: provider.id,
     name: provider.name,
@@ -40,9 +59,37 @@ function toView(provider: AuthProvider): OidcProviderView {
     hasClientSecret: true,
     allowSignup: provider.allowSignup,
     isEnabled: provider.isEnabled,
+    trustUnverifiedEmail: settings.trustUnverifiedEmail,
+    roleClaim: settings.roleClaim,
+    roleMap: settings.roleMap,
+    defaultRole: settings.defaultRole,
+    requiredRoles: settings.requiredRoles,
     createdAt: provider.createdAt,
     updatedAt: provider.updatedAt,
   };
+}
+
+function settingsPatchFromDto(
+  dto: Partial<OidcProviderSettings>,
+): Partial<OidcProviderSettings> {
+  return {
+    trustUnverifiedEmail: dto.trustUnverifiedEmail,
+    roleClaim: dto.roleClaim,
+    roleMap: dto.roleMap,
+    defaultRole: dto.defaultRole,
+    requiredRoles: dto.requiredRoles,
+  };
+}
+
+// A multi-tenant Entra authority (common/organizations/consumers) advertises a
+// templated issuer that never matches a real token, so every login would fail
+// at the OIDC library. Say so when the provider is saved, not at first login.
+function assertIssuerIsUsable(issuer: string | undefined) {
+  if (issuer && isMultiTenantEntraIssuer(issuer)) {
+    throw new BadRequestException(
+      'Multi-tenant Microsoft Entra issuers (common, organizations, consumers) are not supported. Use your tenant-specific issuer, e.g. https://login.microsoftonline.com/<tenant-id>/v2.0',
+    );
+  }
 }
 
 @Injectable()
@@ -66,6 +113,13 @@ export class SsoProviderService {
     user: User,
     workspace: Workspace,
   ): Promise<OidcProviderView> {
+    assertIssuerIsUsable(dto.oidcIssuer);
+
+    const settings = mergeOidcProviderSettings(
+      undefined,
+      settingsPatchFromDto(dto),
+    );
+
     const provider = await this.authProviderRepo.insertOidcProvider({
       name: dto.name,
       oidcIssuer: dto.oidcIssuer,
@@ -73,6 +127,7 @@ export class SsoProviderService {
       oidcClientSecret: this.encryptionService.encrypt(dto.oidcClientSecret),
       allowSignup: dto.allowSignup ?? false,
       isEnabled: dto.isEnabled ?? false,
+      ...(settings ? { settings } : {}),
       creatorId: user.id,
       workspaceId: workspace.id,
     });
@@ -82,7 +137,11 @@ export class SsoProviderService {
       resourceType: AuditResource.SSO_PROVIDER,
       resourceId: provider.id,
       changes: {
-        after: { name: provider.name, isEnabled: provider.isEnabled },
+        after: {
+          name: provider.name,
+          isEnabled: provider.isEnabled,
+          trustUnverifiedEmail: toView(provider).trustUnverifiedEmail,
+        },
       },
     });
 
@@ -100,6 +159,13 @@ export class SsoProviderService {
     if (!existing) {
       throw new NotFoundException('SSO provider not found');
     }
+
+    assertIssuerIsUsable(dto.oidcIssuer);
+
+    const settings = mergeOidcProviderSettings(
+      existing.settings,
+      settingsPatchFromDto(dto),
+    );
 
     const updated = await this.authProviderRepo.updateOidcProvider(
       dto.id,
@@ -121,6 +187,7 @@ export class SsoProviderService {
           ? { allowSignup: dto.allowSignup }
           : {}),
         ...(dto.isEnabled !== undefined ? { isEnabled: dto.isEnabled } : {}),
+        ...(settings ? { settings } : {}),
       },
     );
 
@@ -132,8 +199,17 @@ export class SsoProviderService {
       resourceType: AuditResource.SSO_PROVIDER,
       resourceId: updated.id,
       changes: {
-        before: { name: existing.name, isEnabled: existing.isEnabled },
-        after: { name: updated.name, isEnabled: updated.isEnabled },
+        before: {
+          name: existing.name,
+          isEnabled: existing.isEnabled,
+          trustUnverifiedEmail: parseOidcProviderSettings(existing.settings)
+            .trustUnverifiedEmail,
+        },
+        after: {
+          name: updated.name,
+          isEnabled: updated.isEnabled,
+          trustUnverifiedEmail: toView(updated).trustUnverifiedEmail,
+        },
       },
     });
 

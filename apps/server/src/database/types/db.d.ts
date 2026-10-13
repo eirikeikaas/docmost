@@ -531,6 +531,20 @@ export interface ScimTokens {
   workspaceId: string;
 }
 
+export interface ServiceTokens {
+  createdAt: Generated<Timestamp>;
+  creatorId: string | null;
+  expiresAt: Timestamp | null;
+  id: Generated<string>;
+  lastUsedAt: Timestamp | null;
+  name: string;
+  revokedAt: Timestamp | null;
+  tokenPrefix: string;
+  updatedAt: Generated<Timestamp>;
+  userId: string;
+  workspaceId: string;
+}
+
 export interface Watchers {
   id: Generated<string>;
   userId: string;
@@ -761,6 +775,7 @@ export interface DB {
   pages: Pages;
   publicSpaces: PublicSpaces;
   scimTokens: ScimTokens;
+  serviceTokens: ServiceTokens;
   shares: Shares;
   siemDestinations: SiemDestinations;
   spaceMembers: SpaceMembers;
