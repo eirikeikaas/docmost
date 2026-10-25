@@ -46,5 +46,14 @@ export function parseClaudeArtifactPaste(text: string): string | null {
   }
   const url = parseArtifactUrl(trimmed);
   if (!url) return null;
-  return isClaudeHost(new URL(url).hostname) ? url : null;
+  const parsed = new URL(url);
+  if (!isClaudeHost(parsed.hostname)) return null;
+  // Plain claude.ai links (chats, projects, ...) must stay normal links; only
+  // artifact/embed paths, embed snippets and the content host are embedded.
+  const isSnippet = IFRAME_SRC_RE.test(trimmed);
+  const isArtifactPath = /^\/(public\/artifacts|artifacts|embed)\//.test(
+    parsed.pathname,
+  );
+  const isContentHost = parsed.hostname.endsWith("claudeusercontent.com");
+  return isSnippet || isArtifactPath || isContentHost ? url : null;
 }
