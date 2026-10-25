@@ -569,6 +569,24 @@ const CommandGroups: SlashMenuGroupedItemsType = {
       },
     },
     {
+      title: "Table of contents",
+      description: "Live outline of this page's headings",
+      searchTerms: ["toc", "table of contents", "outline", "headings", "index"],
+      icon: IconList,
+      command: ({ editor, range }: CommandProps) => {
+        editor.chain().focus().deleteRange(range).insertTocBlock().run();
+      },
+    },
+    {
+      title: "Recent pages",
+      description: "List the most recently updated pages in this space",
+      searchTerms: ["recent", "latest", "updated", "changes", "new"],
+      icon: IconClock,
+      command: ({ editor, range }: CommandProps) => {
+        editor.chain().focus().deleteRange(range).insertRecentPages().run();
+      },
+    },
+    {
       title: "Synced block",
       description: "Create a block that stays in sync across pages.",
       searchTerms: [
