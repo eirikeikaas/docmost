@@ -91,8 +91,8 @@ export function SpaceSidebar() {
     handleCreate(null);
   }
 
-  async function handleCreateArtifactPage(artifactUrl: string) {
-    await handleCreate(null, { artifactUrl });
+  async function handleCreateArtifactPage(artifactUrl: string, title: string) {
+    await handleCreate(null, { artifactUrl, title });
   }
 
   return (
