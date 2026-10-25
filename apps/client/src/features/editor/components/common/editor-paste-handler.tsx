@@ -59,7 +59,12 @@ export const handlePaste = (
   }
 
   const artifactUrl = parseClaudeArtifactPaste(clipboardData);
-  if (artifactUrl && editor.state.selection.empty && editor.isEditable) {
+  if (
+    artifactUrl &&
+    editor.state.selection.empty &&
+    editor.isEditable &&
+    !editor.isActive("codeBlock")
+  ) {
     event.preventDefault();
     editor
       .chain()
