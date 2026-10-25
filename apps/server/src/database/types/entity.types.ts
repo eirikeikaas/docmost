@@ -47,6 +47,7 @@ import {
   OauthAuthorizationCodes,
   OauthGrants,
   OauthTokens,
+  PageDecisions,
 } from './db';
 import { PageEmbeddings } from '@docmost/db/types/embeddings.types';
 
@@ -133,6 +134,11 @@ export type UpdatableUserToken = Updateable<Omit<UserTokens, 'id'>>;
 export type Backlink = Selectable<Backlinks>;
 export type InsertableBacklink = Insertable<Backlink>;
 export type UpdatableBacklink = Updateable<Omit<Backlink, 'id'>>;
+
+// Page decision
+export type PageDecision = Selectable<PageDecisions>;
+export type InsertablePageDecision = Insertable<PageDecisions>;
+export type UpdatablePageDecision = Updateable<Omit<PageDecision, 'id'>>;
 
 // Billing
 export type Billing = Selectable<BillingSubscription>;
