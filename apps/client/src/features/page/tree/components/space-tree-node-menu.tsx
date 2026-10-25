@@ -247,6 +247,19 @@ export function NodeMenu({ node, canEdit }: NodeMenuProps) {
                 </Menu.Item>
               )}
 
+              {node.artifactUrl && (
+                <Menu.Item
+                  leftSection={<IconSparkles size={16} />}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openConvertArtifact();
+                  }}
+                >
+                  {t("Change artifact")}
+                </Menu.Item>
+              )}
+
               <Menu.Item
                 leftSection={<IconCopy size={16} />}
                 onClick={(e) => {
@@ -331,8 +344,12 @@ export function NodeMenu({ node, canEdit }: NodeMenuProps) {
       <CreateArtifactPageModal
         opened={convertArtifactOpened}
         onClose={closeConvertArtifact}
-        title={t("Convert to artifact page")}
-        submitLabel={t("Convert")}
+        title={
+          node.artifactUrl
+            ? t("Change artifact")
+            : t("Convert to artifact page")
+        }
+        submitLabel={node.artifactUrl ? t("Save") : t("Convert")}
         onCreate={setArtifactUrl}
       />
     </>

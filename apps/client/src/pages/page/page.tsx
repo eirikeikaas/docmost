@@ -101,12 +101,12 @@ function PageContent({ pageSlug }: { pageSlug: string | undefined }) {
   if (page.artifactUrl) {
     return (
       <div
+        className="base-page-root"
         style={{
           display: "flex",
           flexDirection: "column",
-          minHeight: "100vh",
-          paddingTop: "calc(var(--page-header-height) + 6px)",
-          paddingInline: 24,
+          boxSizing: "border-box",
+          paddingTop: "var(--page-header-height)",
         }}
       >
         <DocumentTitle
@@ -114,18 +114,7 @@ function PageContent({ pageSlug }: { pageSlug: string | undefined }) {
           withAppName={false}
         />
         <MemoizedPageHeader readOnly={!canEdit} />
-        <MemoizedTitleEditor
-          pageId={page.id}
-          slugId={page.slugId}
-          title={page.title}
-          spaceSlug={page.space?.slug ?? ""}
-          editable={canEdit}
-        />
-        <ArtifactView
-          pageId={page.id}
-          artifactUrl={page.artifactUrl}
-          editable={canEdit}
-        />
+        <ArtifactView artifactUrl={page.artifactUrl} />
       </div>
     );
   }
