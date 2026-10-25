@@ -14,6 +14,7 @@ export interface IPage {
   isLocked: boolean;
   isBase: boolean;
   artifactUrl?: string | null;
+  isCollection?: boolean;
   lastUpdatedById: string;
   createdAt: Date;
   updatedAt: Date;

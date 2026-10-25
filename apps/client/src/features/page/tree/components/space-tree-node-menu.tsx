@@ -11,6 +11,7 @@ import {
   IconFileExport,
   IconLink,
   IconSparkles,
+  IconLayoutKanban,
   IconStar,
   IconStarFilled,
   IconTrash,
@@ -221,6 +222,17 @@ export function NodeMenu({ node, canEdit }: NodeMenuProps) {
                 }}
               >
                 {t("New artifact subpage")}
+              </Menu.Item>
+
+              <Menu.Item
+                leftSection={<IconLayoutKanban size={16} />}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleCreate(node.id, { collection: true });
+                }}
+              >
+                {t("New collection subpage")}
               </Menu.Item>
 
               {!node.isBase && (

@@ -63,12 +63,16 @@ export class CollectionController {
         throw new ForbiddenException();
       }
     }
-    const { collection } = await this.collectionService.create(
+    const { collection, page } = await this.collectionService.create(
       user,
       workspace,
       dto,
     );
-    return this.collectionService.info(collection.id, user);
+    // The host page is returned too so the client can add the tree node.
+    return {
+      ...(await this.collectionService.info(collection.id, user)),
+      page,
+    };
   }
 
   @HttpCode(HttpStatus.OK)

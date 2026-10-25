@@ -19,6 +19,7 @@ import { Feature } from "@/ee/features";
 import { getPageTitle } from "@/features/page/page.utils";
 import { DocumentTitle } from "@/components/ui/document-title.tsx";
 import { ArtifactView } from "@/features/page/artifact/artifact-view.tsx";
+import { CollectionView } from "@/features/collection/components/collection-view.tsx";
 const MemoizedFullEditor = React.memo(FullEditor);
 const MemoizedTitleEditor = React.memo(TitleEditor);
 const MemoizedPageHeader = React.memo(PageHeader);
@@ -117,6 +118,34 @@ function PageContent({ pageSlug }: { pageSlug: string | undefined }) {
         />
         <MemoizedPageHeader readOnly={!canEdit} />
         <ArtifactView artifactUrl={page.artifactUrl} />
+      </div>
+    );
+  }
+
+  if (page.isCollection) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          minHeight: "100vh",
+          paddingTop: "calc(var(--page-header-height) + 6px)",
+          paddingInline: 24,
+        }}
+      >
+        <DocumentTitle
+          title={`${page.icon || ""}  ${getPageTitle(page.title, page.isBase, t)}`}
+          withAppName={false}
+        />
+        <MemoizedPageHeader readOnly={!canEdit} />
+        <MemoizedTitleEditor
+          pageId={page.id}
+          slugId={page.slugId}
+          title={page.title}
+          spaceSlug={page.space?.slug ?? ""}
+          editable={canEdit}
+        />
+        <CollectionView pageId={page.id} />
       </div>
     );
   }

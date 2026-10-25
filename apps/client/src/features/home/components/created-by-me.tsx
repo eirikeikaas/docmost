@@ -62,7 +62,7 @@ export default function CreatedByMe({ spaceId }: Props) {
                     )}
                   >
                     <Group wrap="nowrap">
-                      <PageListIcon icon={page.icon} isBase={page.isBase} isArtifact={!!page.artifactUrl} />
+                      <PageListIcon icon={page.icon} isBase={page.isBase} isArtifact={!!page.artifactUrl} isCollection={page.isCollection} />
                       <Text fw={500} size="md" lineClamp={1}>
                         {getPageTitle(page.title, page.isBase, t)}
                       </Text>
