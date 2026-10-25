@@ -5,6 +5,7 @@ import { uploadPdfAction } from "../pdf/upload-pdf-action";
 import { createMentionAction } from "@/features/editor/components/link/internal-link-paste.ts";
 import { INTERNAL_LINK_REGEX } from "@/lib/constants.ts";
 import { Editor } from "@tiptap/core";
+import { parseClaudeArtifactPaste } from "@/features/page/artifact/artifact.utils.ts";
 import {
   getAttachmentInfo,
   uploadFile,
@@ -54,6 +55,17 @@ export const handlePaste = (
       creatorId,
       anchorId,
     );
+    return true;
+  }
+
+  const artifactUrl = parseClaudeArtifactPaste(clipboardData);
+  if (artifactUrl && editor.state.selection.empty && editor.isEditable) {
+    event.preventDefault();
+    editor
+      .chain()
+      .focus()
+      .setEmbed({ provider: "iframe", src: artifactUrl })
+      .run();
     return true;
   }
 

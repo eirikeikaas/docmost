@@ -88,7 +88,7 @@ export interface IPageInput {
   coverPhoto: string;
   position: string;
   isLocked: boolean;
-  artifactUrl: string;
+  artifactUrl: string | null;
 }
 
 export interface IExportPageParams {

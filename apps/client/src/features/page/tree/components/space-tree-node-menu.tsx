@@ -10,6 +10,7 @@ import {
   IconDotsVertical,
   IconFileExport,
   IconLink,
+  IconSparkles,
   IconStar,
   IconStarFilled,
   IconTrash,
@@ -40,6 +41,8 @@ import {
 import { useTreeMutation } from "@/features/page/tree/hooks/use-tree-mutation.ts";
 import type { SpaceTreeNode } from "@/features/page/tree/types.ts";
 import classes from "@/features/page/tree/styles/tree.module.css";
+import { CreateArtifactPageModal } from "@/features/page/artifact/create-artifact-page-modal.tsx";
+import { useUpdatePageMutation } from "@/features/page/queries/page-query.ts";
 
 export interface NodeMenuProps {
   node: SpaceTreeNode;
@@ -51,7 +54,16 @@ export function NodeMenu({ node, canEdit }: NodeMenuProps) {
   const clipboard = useClipboard({ timeout: 500 });
   const { spaceSlug } = useParams();
   const { openDeleteModal } = useDeletePageModal();
-  const { handleDelete } = useTreeMutation(node.spaceId);
+  const { handleDelete, handleCreate } = useTreeMutation(node.spaceId);
+  const updatePageMutation = useUpdatePageMutation();
+  const [
+    childArtifactOpened,
+    { open: openChildArtifact, close: closeChildArtifact },
+  ] = useDisclosure(false);
+  const [
+    convertArtifactOpened,
+    { open: openConvertArtifact, close: closeConvertArtifact },
+  ] = useDisclosure(false);
   const [data, setData] = useAtom(treeDataAtom);
   const emit = useQueryEmit();
   const [exportOpened, { open: openExportModal, close: closeExportModal }] =
@@ -74,6 +86,13 @@ export function NodeMenu({ node, canEdit }: NodeMenuProps) {
       getAppUrl() + buildPageUrl(spaceSlug, node.slugId, node.name);
     clipboard.copy(pageUrl);
     notifications.show({ message: t("Link copied") });
+  };
+
+  const setArtifactUrl = async (artifactUrl: string | null) => {
+    await updatePageMutation.mutateAsync({ pageId: node.id, artifactUrl });
+    setData((prev) =>
+      treeModel.update(prev, node.id, { artifactUrl } as Partial<SpaceTreeNode>),
+    );
   };
 
   const handleDuplicatePage = async () => {
@@ -194,6 +213,41 @@ export function NodeMenu({ node, canEdit }: NodeMenuProps) {
           {canEdit && (
             <>
               <Menu.Item
+                leftSection={<IconSparkles size={16} />}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  openChildArtifact();
+                }}
+              >
+                {t("New artifact subpage")}
+              </Menu.Item>
+
+              {!node.isBase && (
+                <Menu.Item
+                  leftSection={<IconSparkles size={16} />}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (node.artifactUrl) {
+                      setArtifactUrl(null).catch(() =>
+                        notifications.show({
+                          message: t("Failed to update artifact"),
+                          color: "red",
+                        }),
+                      );
+                    } else {
+                      openConvertArtifact();
+                    }
+                  }}
+                >
+                  {node.artifactUrl
+                    ? t("Convert to normal page")
+                    : t("Convert to artifact page")}
+                </Menu.Item>
+              )}
+
+              <Menu.Item
                 leftSection={<IconCopy size={16} />}
                 onClick={(e) => {
                   e.preventDefault();
@@ -265,6 +319,21 @@ export function NodeMenu({ node, canEdit }: NodeMenuProps) {
         id={node.id}
         open={exportOpened}
         onClose={closeExportModal}
+      />
+
+      <CreateArtifactPageModal
+        opened={childArtifactOpened}
+        onClose={closeChildArtifact}
+        title={t("New artifact subpage")}
+        onCreate={(artifactUrl) => handleCreate(node.id, { artifactUrl })}
+      />
+
+      <CreateArtifactPageModal
+        opened={convertArtifactOpened}
+        onClose={closeConvertArtifact}
+        title={t("Convert to artifact page")}
+        submitLabel={t("Convert")}
+        onCreate={setArtifactUrl}
       />
     </>
   );

@@ -31,6 +31,7 @@ import {
   IconMoodSmile,
   IconRotate2,
   IconSuperscript,
+  IconSparkles,
 } from "@tabler/icons-react";
 import {
   CommandProps,
@@ -646,6 +647,20 @@ const CommandGroups: SlashMenuGroupedItemsType = {
       description: "Embed any Iframe",
       searchTerms: ["iframe"],
       icon: IconAppWindow,
+      command: ({ editor, range }: CommandProps) => {
+        editor
+          .chain()
+          .focus()
+          .deleteRange(range)
+          .setEmbed({ provider: "iframe" })
+          .run();
+      },
+    },
+    {
+      title: "Claude artifact",
+      description: "Embed a published Claude artifact",
+      searchTerms: ["claude", "artifact", "ai"],
+      icon: IconSparkles,
       command: ({ editor, range }: CommandProps) => {
         editor
           .chain()

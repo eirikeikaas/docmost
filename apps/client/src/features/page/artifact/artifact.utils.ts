@@ -1,13 +1,22 @@
+const IFRAME_SRC_RE = /<iframe[^>]*\ssrc\s*=\s*["']([^"']+)["']/i;
+
+/**
+ * If the input is a pasted `<iframe src="…">` snippet, returns its src;
+ * otherwise returns the trimmed input unchanged.
+ */
+export function extractEmbedSrc(input: string): string {
+  const trimmed = input.trim();
+  const match = trimmed.match(IFRAME_SRC_RE);
+  return (match ? match[1] : trimmed).replace(/&amp;/g, "&");
+}
+
 /**
  * Accepts either a bare https URL or a pasted Claude "embed code" snippet
  * (`<iframe src="…">`) and returns the https URL to embed, or null if invalid.
  */
 export function parseArtifactUrl(input: string): string | null {
-  const trimmed = input.trim();
-  if (!trimmed) return null;
-
-  const srcMatch = trimmed.match(/<iframe[^>]*\ssrc\s*=\s*["']([^"']+)["']/i);
-  const candidate = (srcMatch ? srcMatch[1] : trimmed).replace(/&amp;/g, "&");
+  const candidate = extractEmbedSrc(input);
+  if (!candidate) return null;
 
   try {
     const url = new URL(candidate);
@@ -15,4 +24,27 @@ export function parseArtifactUrl(input: string): string | null {
   } catch {
     return null;
   }
+}
+
+function isClaudeHost(hostname: string): boolean {
+  return (
+    hostname === "claude.ai" ||
+    hostname.endsWith(".claude.ai") ||
+    hostname === "claudeusercontent.com" ||
+    hostname.endsWith(".claudeusercontent.com")
+  );
+}
+
+/**
+ * Returns the embed URL when `text` is a single Claude artifact link or embed
+ * snippet (used for paste-to-embed), otherwise null.
+ */
+export function parseClaudeArtifactPaste(text: string): string | null {
+  const trimmed = text.trim();
+  if (!trimmed || (!IFRAME_SRC_RE.test(trimmed) && /\s/.test(trimmed))) {
+    return null;
+  }
+  const url = parseArtifactUrl(trimmed);
+  if (!url) return null;
+  return isClaudeHost(new URL(url).hostname) ? url : null;
 }

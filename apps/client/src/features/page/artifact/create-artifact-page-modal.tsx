@@ -7,9 +7,17 @@ type Props = {
   opened: boolean;
   onClose: () => void;
   onCreate: (artifactUrl: string) => Promise<void>;
+  title?: string;
+  submitLabel?: string;
 };
 
-export function CreateArtifactPageModal({ opened, onClose, onCreate }: Props) {
+export function CreateArtifactPageModal({
+  opened,
+  onClose,
+  onCreate,
+  title,
+  submitLabel,
+}: Props) {
   const { t } = useTranslation();
   const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +47,12 @@ export function CreateArtifactPageModal({ opened, onClose, onCreate }: Props) {
   };
 
   return (
-    <Modal opened={opened} onClose={handleClose} title={t("New artifact page")} centered>
+    <Modal
+      opened={opened}
+      onClose={handleClose}
+      title={title ?? t("New artifact page")}
+      centered
+    >
       <Textarea
         autosize
         minRows={3}
@@ -61,7 +74,7 @@ export function CreateArtifactPageModal({ opened, onClose, onCreate }: Props) {
           {t("Cancel")}
         </Button>
         <Button onClick={handleSubmit} loading={loading}>
-          {t("Create")}
+          {submitLabel ?? t("Create")}
         </Button>
       </Group>
     </Modal>
