@@ -1,4 +1,5 @@
 import api from "@/lib/api-client";
+import { IPage } from "@/features/page/types/page.types";
 import {
   ICollection,
   ICreatedCollection,
@@ -131,6 +132,12 @@ export async function moveItem(data: {
   props?: Record<string, unknown>;
 }): Promise<IItem> {
   const req = await api.post<IItem>("/items/move", data);
+  return req.data;
+}
+
+/** Page behind an item; created on first use. */
+export async function openItemPage(itemId: string): Promise<IPage> {
+  const req = await api.post<IPage>("/items/open-page", { itemId });
   return req.data;
 }
 

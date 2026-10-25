@@ -1,4 +1,8 @@
 import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { notifications } from "@mantine/notifications";
+import { useQueryClient } from "@tanstack/react-query";
+import { IconFileDescription } from "@tabler/icons-react";
 import { Button, Group, Modal, Stack, Text, TextInput } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import {
@@ -7,6 +11,8 @@ import {
   PropertyValue,
 } from "@/features/collection/types/collection.types";
 import { ItemCell } from "@/features/collection/components/item-cell";
+import { openItemPage } from "@/features/collection/services/collection-service";
+import { buildPageUrl } from "@/features/page/page.utils.ts";
 
 type Props = {
   item: IItem | null;
@@ -30,6 +36,27 @@ export function ItemModal({
 }: Props) {
   const { t } = useTranslation();
   const [title, setTitle] = useState("");
+  const [opening, setOpening] = useState(false);
+  const navigate = useNavigate();
+  const { spaceSlug } = useParams();
+  const queryClient = useQueryClient();
+
+  const openAsPage = async () => {
+    if (!item) return;
+    setOpening(true);
+    try {
+      const page = await openItemPage(item.id);
+      queryClient.invalidateQueries({
+        queryKey: ["collection-items", item.collectionId],
+      });
+      onClose();
+      navigate(buildPageUrl(spaceSlug, page.slugId, page.title));
+    } catch {
+      notifications.show({ message: t("Failed to open page"), color: "red" });
+    } finally {
+      setOpening(false);
+    }
+  };
 
   useEffect(() => {
     setTitle(item?.title ?? "");
@@ -71,7 +98,15 @@ export function ItemModal({
             </Group>
           ))}
           {editable && (
-            <Group justify="flex-end" mt="sm">
+            <Group justify="space-between" mt="sm">
+              <Button
+                variant="light"
+                leftSection={<IconFileDescription size={16} />}
+                loading={opening}
+                onClick={openAsPage}
+              >
+                {item.pageId ? t("Open page") : t("Open as page")}
+              </Button>
               <Button
                 color="red"
                 variant="subtle"

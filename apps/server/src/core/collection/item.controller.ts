@@ -58,6 +58,17 @@ export class ItemController {
   }
 
   @HttpCode(HttpStatus.OK)
+  @Post('open-page')
+  @OAuthScope('write')
+  openPage(
+    @Body() dto: ItemIdDto,
+    @AuthUser() user: User,
+    @AuthWorkspace() workspace: Workspace,
+  ) {
+    return this.collectionService.openItemPage(user, workspace, dto.itemId);
+  }
+
+  @HttpCode(HttpStatus.OK)
   @Post('delete')
   @OAuthScope('write')
   async delete(@Body() dto: ItemIdDto, @AuthUser() user: User) {

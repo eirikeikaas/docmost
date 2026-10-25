@@ -422,6 +422,50 @@ export class CollectionService {
     );
   }
 
+  /**
+   * Returns the page behind an item, creating it on first use as a normal
+   * child page of the collection's host page. Idempotent and race-safe.
+   */
+  async openItemPage(user: User, workspace: Workspace, itemId: string) {
+    const item = await this.itemRepo.findById(itemId);
+    if (!item) throw new NotFoundException('Item not found');
+    const { page: host } = await this.getCollectionForUser(
+      item.collectionId,
+      user,
+      'edit',
+    );
+
+    return executeTx(this.db, async (trx) => {
+      const locked = await this.itemRepo.findByIdForUpdate(item.id, trx);
+      if (!locked) throw new NotFoundException('Item not found');
+
+      if (locked.pageId) {
+        const existing = await this.pageRepo.findById(locked.pageId);
+        if (existing && !existing.deletedAt) {
+          await this.pageAccessService.validateCanView(existing, user);
+          return existing;
+        }
+      }
+
+      const page = await this.pageService.create(
+        user.id,
+        workspace.id,
+        {
+          spaceId: host.spaceId,
+          parentPageId: host.id,
+          title: locked.title || undefined,
+        },
+        trx,
+      );
+      await this.itemRepo.update(
+        locked.id,
+        { pageId: page.id, lastUpdatedById: user.id },
+        trx,
+      );
+      return page;
+    });
+  }
+
   async deleteItem(user: User, itemId: string) {
     const { item } = await this.getItemForUser(itemId, user, 'edit');
     await this.itemRepo.softDelete(item.id);

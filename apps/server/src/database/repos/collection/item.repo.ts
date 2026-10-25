@@ -73,6 +73,20 @@ export class ItemRepo {
     return row?.position ?? null;
   }
 
+  /** Live item row locked FOR UPDATE; serialises concurrent open-as-page calls. */
+  async findByIdForUpdate(
+    itemId: string,
+    trx: KyselyTransaction,
+  ): Promise<Item | undefined> {
+    return trx
+      .selectFrom('items')
+      .selectAll()
+      .where('id', '=', itemId)
+      .where('deletedAt', 'is', null)
+      .forUpdate()
+      .executeTakeFirst();
+  }
+
   /** Position of the live item right before/after `position`, if any. */
   async adjacentPosition(
     collectionId: string,
