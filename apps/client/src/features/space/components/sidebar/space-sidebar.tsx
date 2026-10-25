@@ -16,6 +16,7 @@ import {
   IconPlus,
   IconSearch,
   IconSettings,
+  IconSparkles,
   IconStar,
   IconStarFilled,
   IconTemplate,
@@ -45,6 +46,7 @@ import {
 import PageImportModal from "@/features/page/components/page-import-modal.tsx";
 import { useTranslation } from "react-i18next";
 import { SwitchSpace } from "./switch-space";
+import { CreateArtifactPageModal } from "@/features/page/artifact/create-artifact-page-modal.tsx";
 import ExportModal from "@/components/common/export-modal";
 import {
   useFavoriteIds,
@@ -76,6 +78,10 @@ export function SpaceSidebar() {
   const spaceRules = space?.membership?.permissions;
   const spaceAbility = useSpaceAbility(spaceRules);
   const { handleCreate } = useTreeMutation(space?.id ?? "");
+  const [
+    artifactModalOpened,
+    { open: openArtifactModal, close: closeArtifactModal },
+  ] = useDisclosure(false);
 
   if (!space) {
     return <></>;
@@ -83,6 +89,10 @@ export function SpaceSidebar() {
 
   function handleCreatePage() {
     handleCreate(null);
+  }
+
+  async function handleCreateArtifactPage(artifactUrl: string) {
+    await handleCreate(null, { artifactUrl });
   }
 
   return (
@@ -181,6 +191,30 @@ export function SpaceSidebar() {
                 </div>
               </UnstyledButton>
             )}
+
+            {spaceAbility.can(
+              SpaceCaslAction.Manage,
+              SpaceCaslSubject.Page,
+            ) && (
+              <UnstyledButton
+                className={classes.menu}
+                onClick={() => {
+                  openArtifactModal();
+                  if (mobileSidebarOpened) {
+                    toggleMobileSidebar();
+                  }
+                }}
+              >
+                <div className={classes.menuItemInner}>
+                  <IconSparkles
+                    size={18}
+                    className={classes.menuItemIcon}
+                    stroke={2}
+                  />
+                  <span>{t("New artifact page")}</span>
+                </div>
+              </UnstyledButton>
+            )}
           </div>
         </div>
 
@@ -234,6 +268,12 @@ export function SpaceSidebar() {
         opened={opened}
         onClose={closeSettings}
         spaceId={space?.slug}
+      />
+
+      <CreateArtifactPageModal
+        opened={artifactModalOpened}
+        onClose={closeArtifactModal}
+        onCreate={handleCreateArtifactPage}
       />
     </>
   );

@@ -27,7 +27,10 @@ import { useQueryEmit } from "@/features/websocket/use-query-emit.ts";
 
 export type UseTreeMutation = {
   handleMove: (sourceId: string, op: DropOp) => Promise<void>;
-  handleCreate: (parentId: string | null) => Promise<void>;
+  handleCreate: (
+    parentId: string | null,
+    opts?: { artifactUrl?: string },
+  ) => Promise<void>;
   handleRename: (id: string, name: string) => Promise<void>;
   handleDelete: (id: string) => Promise<void>;
 };
@@ -135,9 +138,14 @@ export function useTreeMutation(spaceId: string): UseTreeMutation {
   );
 
   const handleCreate = useCallback(
-    async (parentId: string | null) => {
-      const payload: { spaceId: string; parentPageId?: string } = { spaceId };
+    async (parentId: string | null, opts?: { artifactUrl?: string }) => {
+      const payload: {
+        spaceId: string;
+        parentPageId?: string;
+        artifactUrl?: string;
+      } = { spaceId };
       if (parentId) payload.parentPageId = parentId;
+      if (opts?.artifactUrl) payload.artifactUrl = opts.artifactUrl;
 
       let createdPage: IPage;
       try {
@@ -154,6 +162,7 @@ export function useTreeMutation(spaceId: string): UseTreeMutation {
         spaceId: createdPage.spaceId,
         parentPageId: createdPage.parentPageId,
         hasChildren: false,
+        artifactUrl: createdPage.artifactUrl,
         children: [],
       };
 

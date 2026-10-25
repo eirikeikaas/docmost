@@ -144,6 +144,7 @@ export class PageService {
       workspaceId: workspaceId,
       lastUpdatedById: userId,
       isBase,
+      artifactUrl: createPageDto.artifactUrl,
       content,
       textContent,
       ydoc,
@@ -233,6 +234,7 @@ export class PageService {
       {
         title: updatePageDto.title,
         icon: updatePageDto.icon,
+        artifactUrl: updatePageDto.artifactUrl,
         lastUpdatedById: user.id,
         updatedAt: new Date(),
         contributorIds: contributorIds,
@@ -310,6 +312,7 @@ export class PageService {
         'spaceId',
         'creatorId',
         'isBase',
+        'artifactUrl',
         'deletedAt',
       ])
       .select((eb) => this.pageRepo.withHasChildren(eb))
@@ -909,6 +912,7 @@ export class PageService {
             'title',
             'icon',
             'isBase',
+            'artifactUrl',
             'position',
             'parentPageId',
             'spaceId',
@@ -925,6 +929,7 @@ export class PageService {
                 'p.title',
                 'p.icon',
                 'p.isBase',
+                'p.artifactUrl',
                 'p.position',
                 'p.parentPageId',
                 'p.spaceId',

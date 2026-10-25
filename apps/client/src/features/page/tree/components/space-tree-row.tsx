@@ -9,6 +9,7 @@ import {
   IconFileDescription,
   IconPlus,
   IconPointFilled,
+  IconSparkles,
   IconTable,
 } from "@tabler/icons-react";
 
@@ -167,6 +168,8 @@ export function SpaceTreeRow({
               node.icon
             ) : node.isBase ? (
               <IconTable size={18} />
+            ) : node.artifactUrl ? (
+              <IconSparkles size={18} />
             ) : (
               <IconFileDescription size="18" />
             )

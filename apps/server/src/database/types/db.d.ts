@@ -311,6 +311,7 @@ export interface PageHistory {
 }
 
 export interface Pages {
+  artifactUrl: string | null;
   content: Json | null;
   contributorIds: Generated<string[] | null>;
   coverPhoto: string | null;

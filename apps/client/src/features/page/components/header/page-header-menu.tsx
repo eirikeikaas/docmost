@@ -103,7 +103,7 @@ export default function PageHeaderMenu({ readOnly }: PageHeaderMenuProps) {
     <>
       <ConnectionWarning />
 
-      {!readOnly && !page?.isBase && <PageEditModeToggle size="xs" />}
+      {!readOnly && !(page?.isBase || page?.artifactUrl) && <PageEditModeToggle size="xs" />}
 
       <PageShareModal readOnly={readOnly} />
 
@@ -118,7 +118,7 @@ export default function PageHeaderMenu({ readOnly }: PageHeaderMenuProps) {
         </ActionIcon>
       </Tooltip>
 
-      {!page?.isBase && (
+      {!(page?.isBase || page?.artifactUrl) && (
         <Tooltip label={t("Table of contents")} openDelay={250} withArrow>
           <ActionIcon
             variant="subtle"
@@ -242,7 +242,7 @@ function PageActionMenu({ readOnly }: PageActionMenuProps) {
             {t("Copy link")}
           </Menu.Item>
 
-          {!page?.isBase && (
+          {!(page?.isBase || page?.artifactUrl) && (
             <Menu.Item
               leftSection={<IconMarkdown size={16} />}
               onClick={handleCopyAsMarkdown}
@@ -280,9 +280,9 @@ function PageActionMenu({ readOnly }: PageActionMenuProps) {
             </Menu.Item>
           )}
 
-          {!page?.isBase && <Menu.Divider />}
+          {!(page?.isBase || page?.artifactUrl) && <Menu.Divider />}
 
-          {!page?.isBase && (
+          {!(page?.isBase || page?.artifactUrl) && (
             <Menu.Item leftSection={<IconArrowsHorizontal size={16} />}>
               <Group wrap="nowrap">
                 <PageWidthToggle label={t("Full width")} />
@@ -290,7 +290,7 @@ function PageActionMenu({ readOnly }: PageActionMenuProps) {
             </Menu.Item>
           )}
 
-          {!page?.isBase && (
+          {!(page?.isBase || page?.artifactUrl) && (
             <Menu.Item
               leftSection={<IconHistory size={16} />}
               onClick={openHistoryModal}
@@ -299,7 +299,7 @@ function PageActionMenu({ readOnly }: PageActionMenuProps) {
             </Menu.Item>
           )}
 
-          {!page?.isBase && (
+          {!(page?.isBase || page?.artifactUrl) && (
             <Menu.Item
               leftSection={<IconPaperclip size={16} />}
               onClick={openAttachmentsModal}
@@ -308,7 +308,7 @@ function PageActionMenu({ readOnly }: PageActionMenuProps) {
             </Menu.Item>
           )}
 
-          {!readOnly && !page?.isBase && (
+          {!readOnly && !(page?.isBase || page?.artifactUrl) && (
             <PageVerificationMenuItem
               pageId={page?.id}
               onClick={openVerificationModal}
