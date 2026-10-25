@@ -10,6 +10,7 @@ import {
   IconPlus,
   IconPointFilled,
   IconSparkles,
+  IconLayoutKanban,
   IconTable,
 } from "@tabler/icons-react";
 
@@ -168,6 +169,8 @@ export function SpaceTreeRow({
               node.icon
             ) : node.isBase ? (
               <IconTable size={18} />
+            ) : node.isCollection ? (
+              <IconLayoutKanban size={18} />
             ) : node.artifactUrl ? (
               <IconSparkles size={18} />
             ) : (

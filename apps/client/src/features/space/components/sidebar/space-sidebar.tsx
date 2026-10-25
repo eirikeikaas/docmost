@@ -17,6 +17,7 @@ import {
   IconSearch,
   IconSettings,
   IconSparkles,
+  IconLayoutKanban,
   IconStar,
   IconStarFilled,
   IconTemplate,
@@ -89,6 +90,10 @@ export function SpaceSidebar() {
 
   function handleCreatePage() {
     handleCreate(null);
+  }
+
+  function handleCreateCollection() {
+    handleCreate(null, { collection: true });
   }
 
   async function handleCreateArtifactPage(artifactUrl: string, title: string) {
@@ -212,6 +217,30 @@ export function SpaceSidebar() {
                     stroke={2}
                   />
                   <span>{t("New artifact page")}</span>
+                </div>
+              </UnstyledButton>
+            )}
+
+            {spaceAbility.can(
+              SpaceCaslAction.Manage,
+              SpaceCaslSubject.Page,
+            ) && (
+              <UnstyledButton
+                className={classes.menu}
+                onClick={() => {
+                  handleCreateCollection();
+                  if (mobileSidebarOpened) {
+                    toggleMobileSidebar();
+                  }
+                }}
+              >
+                <div className={classes.menuItemInner}>
+                  <IconLayoutKanban
+                    size={18}
+                    className={classes.menuItemIcon}
+                    stroke={2}
+                  />
+                  <span>{t("New collection")}</span>
                 </div>
               </UnstyledButton>
             )}

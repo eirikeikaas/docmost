@@ -22,6 +22,8 @@ import { UserTokenRepo } from './repos/user-token/user-token.repo';
 import { UserSessionRepo } from '@docmost/db/repos/session/user-session.repo';
 import { BacklinkRepo } from '@docmost/db/repos/backlink/backlink.repo';
 import { DecisionRepo } from '@docmost/db/repos/decision/decision.repo';
+import { CollectionRepo } from '@docmost/db/repos/collection/collection.repo';
+import { ItemRepo } from '@docmost/db/repos/collection/item.repo';
 import { SpaceLinkRepo } from '@docmost/db/repos/space/space-link.repo';
 import { ShareRepo } from '@docmost/db/repos/share/share.repo';
 import { PublicSpaceRepo } from '@docmost/db/repos/public-space/public-space.repo';
@@ -95,6 +97,8 @@ import { normalizePostgresUrl } from '../common/helpers';
     UserSessionRepo,
     BacklinkRepo,
     DecisionRepo,
+    CollectionRepo,
+    ItemRepo,
     SpaceLinkRepo,
     ShareRepo,
     PublicSpaceRepo,
@@ -127,6 +131,8 @@ import { normalizePostgresUrl } from '../common/helpers';
     UserSessionRepo,
     BacklinkRepo,
     DecisionRepo,
+    CollectionRepo,
+    ItemRepo,
     SpaceLinkRepo,
     ShareRepo,
     PublicSpaceRepo,

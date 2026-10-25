@@ -304,6 +304,7 @@ export class FavoriteRepo {
           'pages.icon',
           'pages.isBase',
           'pages.artifactUrl',
+          'pages.isCollection',
           'pages.spaceId',
         ])
         .whereRef('pages.id', '=', 'favorites.pageId')

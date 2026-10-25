@@ -323,6 +323,7 @@ export interface Pages {
   id: Generated<string>;
   isBase: Generated<boolean>;
   baseSchemaVersion: Generated<number>;
+  isCollection: Generated<boolean>;
   isLocked: Generated<boolean>;
   lastUpdatedById: string | null;
   parentPageId: string | null;
@@ -769,6 +770,55 @@ export interface PageDecisions {
   workspaceId: string;
 }
 
+export interface Collections {
+  createdAt: Generated<Timestamp>;
+  id: Generated<string>;
+  pageId: string;
+  schemaVersion: Generated<number>;
+  spaceId: string;
+  updatedAt: Generated<Timestamp>;
+  workspaceId: string;
+}
+
+export interface ItemProperties {
+  collectionId: string;
+  config: Generated<Json>;
+  createdAt: Generated<Timestamp>;
+  id: Generated<string>;
+  name: string;
+  position: string;
+  type: string;
+  updatedAt: Generated<Timestamp>;
+}
+
+export interface Items {
+  collectionId: string;
+  createdAt: Generated<Timestamp>;
+  createdById: string | null;
+  deletedAt: Timestamp | null;
+  id: Generated<string>;
+  lastUpdatedById: string | null;
+  pageId: string | null;
+  position: string;
+  props: Generated<Json>;
+  spaceId: string;
+  title: Generated<string>;
+  updatedAt: Generated<Timestamp>;
+  workspaceId: string;
+}
+
+export interface ItemViews {
+  collectionId: string;
+  config: Generated<Json>;
+  createdAt: Generated<Timestamp>;
+  createdById: string | null;
+  id: Generated<string>;
+  name: string;
+  position: string;
+  type: string;
+  updatedAt: Generated<Timestamp>;
+}
+
 export interface DB {
   aiChats: AiChats;
   aiChatMessages: AiChatMessages;
@@ -782,11 +832,15 @@ export interface DB {
   baseRows: BaseRows;
   baseViews: BaseViews;
   billing: Billing;
+  collections: Collections;
   comments: Comments;
   favorites: Favorites;
   fileTasks: FileTasks;
   groups: Groups;
   groupUsers: GroupUsers;
+  itemProperties: ItemProperties;
+  items: Items;
+  itemViews: ItemViews;
   labels: Labels;
   notifications: Notifications;
   pageAccess: PageAccess;

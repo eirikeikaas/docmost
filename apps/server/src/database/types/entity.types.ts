@@ -49,6 +49,10 @@ import {
   OauthGrants,
   OauthTokens,
   PageDecisions,
+  Collections,
+  ItemProperties,
+  Items,
+  ItemViews,
 } from './db';
 import { PageEmbeddings } from '@docmost/db/types/embeddings.types';
 
@@ -140,6 +144,26 @@ export type UpdatableBacklink = Updateable<Omit<Backlink, 'id'>>;
 export type PageDecision = Selectable<PageDecisions>;
 export type InsertablePageDecision = Insertable<PageDecisions>;
 export type UpdatablePageDecision = Updateable<Omit<PageDecision, 'id'>>;
+
+// Collection (a page-hosted set of items)
+export type Collection = Selectable<Collections>;
+export type InsertableCollection = Insertable<Collections>;
+export type UpdatableCollection = Updateable<Omit<Collections, 'id'>>;
+
+// Item property (collection column definition)
+export type ItemProperty = Selectable<ItemProperties>;
+export type InsertableItemProperty = Insertable<ItemProperties>;
+export type UpdatableItemProperty = Updateable<Omit<ItemProperties, 'id'>>;
+
+// Item
+export type Item = Selectable<Items>;
+export type InsertableItem = Insertable<Items>;
+export type UpdatableItem = Updateable<Omit<Items, 'id'>>;
+
+// Item view
+export type ItemView = Selectable<ItemViews>;
+export type InsertableItemView = Insertable<ItemViews>;
+export type UpdatableItemView = Updateable<Omit<ItemViews, 'id'>>;
 
 // Billing
 export type Billing = Selectable<BillingSubscription>;

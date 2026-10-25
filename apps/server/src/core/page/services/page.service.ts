@@ -95,6 +95,7 @@ export class PageService {
     createPageDto: CreatePageDto,
     trx?: KyselyTransaction,
     isBase: boolean = false,
+    isCollection: boolean = false,
   ): Promise<Page> {
     let parentPageId = undefined;
 
@@ -144,6 +145,7 @@ export class PageService {
       workspaceId: workspaceId,
       lastUpdatedById: userId,
       isBase,
+      isCollection,
       artifactUrl: createPageDto.artifactUrl,
       content,
       textContent,
@@ -313,6 +315,7 @@ export class PageService {
         'creatorId',
         'isBase',
         'artifactUrl',
+        'isCollection',
         'deletedAt',
       ])
       .select((eb) => this.pageRepo.withHasChildren(eb))
@@ -914,6 +917,7 @@ export class PageService {
             'icon',
             'isBase',
             'artifactUrl',
+            'isCollection',
             'position',
             'parentPageId',
             'spaceId',
@@ -931,6 +935,7 @@ export class PageService {
                 'p.icon',
                 'p.isBase',
                 'p.artifactUrl',
+                'p.isCollection',
                 'p.position',
                 'p.parentPageId',
                 'p.spaceId',

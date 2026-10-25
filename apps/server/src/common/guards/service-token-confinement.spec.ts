@@ -75,6 +75,9 @@ const SESSION_ONLY_HANDLERS: Record<string, string[]> = {
 const OPEN_CONTROLLERS: string[] = [
   'core/page/page.controller',
   'core/page/transclusion/transclusion.controller',
+  // collections and their items inherit the host page's permissions
+  'core/collection/collection.controller',
+  'core/collection/item.controller',
   'core/comment/comment.controller',
   'core/search/search.controller',
   'core/label/label.controller',

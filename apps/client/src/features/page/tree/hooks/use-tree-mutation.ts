@@ -24,12 +24,13 @@ import {
 import { buildPageUrl } from "@/features/page/page.utils.ts";
 import { getSpaceUrl } from "@/lib/config.ts";
 import { useQueryEmit } from "@/features/websocket/use-query-emit.ts";
+import { createCollection } from "@/features/collection/services/collection-service.ts";
 
 export type UseTreeMutation = {
   handleMove: (sourceId: string, op: DropOp) => Promise<void>;
   handleCreate: (
     parentId: string | null,
-    opts?: { artifactUrl?: string; title?: string },
+    opts?: { artifactUrl?: string; title?: string; collection?: boolean },
   ) => Promise<void>;
   handleRename: (id: string, name: string) => Promise<void>;
   handleDelete: (id: string) => Promise<void>;
@@ -138,7 +139,10 @@ export function useTreeMutation(spaceId: string): UseTreeMutation {
   );
 
   const handleCreate = useCallback(
-    async (parentId: string | null, opts?: { artifactUrl?: string; title?: string }) => {
+    async (
+      parentId: string | null,
+      opts?: { artifactUrl?: string; title?: string; collection?: boolean },
+    ) => {
       const payload: {
         spaceId: string;
         title?: string;
@@ -151,7 +155,14 @@ export function useTreeMutation(spaceId: string): UseTreeMutation {
 
       let createdPage: IPage;
       try {
-        createdPage = await createPageMutation.mutateAsync(payload);
+        createdPage = opts?.collection
+          ? (
+              await createCollection({
+                spaceId,
+                ...(parentId && { parentPageId: parentId }),
+              })
+            ).page
+          : await createPageMutation.mutateAsync(payload);
       } catch {
         throw new Error("Failed to create page");
       }
@@ -165,6 +176,7 @@ export function useTreeMutation(spaceId: string): UseTreeMutation {
         parentPageId: createdPage.parentPageId,
         hasChildren: false,
         artifactUrl: createdPage.artifactUrl,
+        isCollection: createdPage.isCollection,
         children: [],
       };
 
