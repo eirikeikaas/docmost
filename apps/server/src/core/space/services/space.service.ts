@@ -177,7 +177,7 @@ export class SpaceService {
       if (projectId !== null) {
         if (!isValidProjectId(projectId)) {
           throw new BadRequestException(
-            'Project id must be up to four letters followed by four digits, e.g. FOU0002',
+            'Project id must be two to four letters followed by four digits, e.g. FOU0002',
           );
         }
         const owner = await this.spaceRepo.findByProjectId(

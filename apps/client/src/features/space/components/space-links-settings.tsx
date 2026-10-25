@@ -25,7 +25,7 @@ import {
 } from "@/features/space/types/space.types.ts";
 
 // Marathon project id, e.g. FOU0002 or LÆRE0001. Spaces are tolerated on input.
-const PROJECT_ID_PATTERN = /^[A-ZÆØÅ]{0,4}\d{4}$/;
+const PROJECT_ID_PATTERN = /^[A-ZÆØÅ]{2,4}\d{4}$/;
 
 const normalizeProjectId = (value: string) =>
   value.replace(/\s+/g, "").toLocaleUpperCase("nb-NO");
@@ -101,7 +101,7 @@ export default function SpaceLinksSettings({
         </Title>
         <Text size="sm" c="dimmed" mb="xs">
           {t(
-            "The project id owned by Marathon (up to four letters followed by four digits). It is shared by all the systems below.",
+            "The project id owned by Marathon (two to four letters followed by four digits). It is shared by all the systems below.",
           )}
         </Text>
         <Group align="flex-start" gap="xs">
@@ -113,7 +113,7 @@ export default function SpaceLinksSettings({
             readOnly={readOnly}
             error={
               projectIdInvalid
-                ? t("Up to four letters followed by four digits")
+                ? t("Two to four letters followed by four digits")
                 : undefined
             }
             onChange={(e) => setProjectId(e.currentTarget.value)}

@@ -81,7 +81,7 @@ export function registerDocmostTools(
   const projectId = z
     .string()
     .min(1)
-    .describe('Marathon project id, up to four letters + four digits, e.g. FOU0002');
+    .describe('Marathon project id, two to four letters + four digits, e.g. FOU0002');
   const provider = z.enum(['sharepoint', 'linear', 'trylle', 'busy']);
 
   server.registerTool(
