@@ -30,7 +30,7 @@ export type UseTreeMutation = {
   handleMove: (sourceId: string, op: DropOp) => Promise<void>;
   handleCreate: (
     parentId: string | null,
-    opts?: { artifactUrl?: string; collection?: boolean },
+    opts?: { artifactUrl?: string; title?: string; collection?: boolean },
   ) => Promise<void>;
   handleRename: (id: string, name: string) => Promise<void>;
   handleDelete: (id: string) => Promise<void>;
@@ -141,15 +141,17 @@ export function useTreeMutation(spaceId: string): UseTreeMutation {
   const handleCreate = useCallback(
     async (
       parentId: string | null,
-      opts?: { artifactUrl?: string; collection?: boolean },
+      opts?: { artifactUrl?: string; title?: string; collection?: boolean },
     ) => {
       const payload: {
         spaceId: string;
+        title?: string;
         parentPageId?: string;
         artifactUrl?: string;
       } = { spaceId };
       if (parentId) payload.parentPageId = parentId;
       if (opts?.artifactUrl) payload.artifactUrl = opts.artifactUrl;
+      if (opts?.title) payload.title = opts.title;
 
       let createdPage: IPage;
       try {
@@ -168,7 +170,7 @@ export function useTreeMutation(spaceId: string): UseTreeMutation {
       const newNode: SpaceTreeNode = {
         id: createdPage.id,
         slugId: createdPage.slugId,
-        name: "",
+        name: createdPage.title ?? "",
         position: createdPage.position,
         spaceId: createdPage.spaceId,
         parentPageId: createdPage.parentPageId,

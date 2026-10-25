@@ -378,6 +378,14 @@ export class EnvironmentService {
     return disabled === 'true';
   }
 
+  // Our own MCP server at /api/mcp; unrelated to the enterprise MCP feature.
+  isMcpServerEnabled(): boolean {
+    const enabled = this.configService
+      .get<string>('MCP_SERVER_ENABLED', 'false')
+      .toLowerCase();
+    return enabled === 'true';
+  }
+
   isIframeEmbedAllowed(): boolean {
     const allowed = this.configService
       .get<string>('IFRAME_EMBED_ALLOWED', 'false')

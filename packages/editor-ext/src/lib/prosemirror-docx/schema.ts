@@ -191,6 +191,8 @@ export const defaultAsyncNodes: NodeSerializerAsync = {
   footnote() {},
   // No usable static export representation: skip without failing.
   subpages() {},
+  tocBlock() {},
+  recentPages() {},
   transclusionReference() {},
   base() {},
 };

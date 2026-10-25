@@ -32,6 +32,7 @@ import {
   AuthAccounts,
   Shares,
   PublicSpaces,
+  SpaceLinks,
   Favorites,
   FileTasks,
   UserMfa as _UserMFA,
@@ -185,6 +186,9 @@ export type InsertableShare = Insertable<Shares>;
 export type UpdatableShare = Updateable<Omit<Shares, 'id'>>;
 
 // PublicSpace
+export type SpaceLink = Selectable<SpaceLinks>;
+export type InsertableSpaceLink = Insertable<SpaceLinks>;
+
 export type PublicSpace = Selectable<PublicSpaces>;
 export type InsertablePublicSpace = Insertable<PublicSpaces>;
 export type UpdatablePublicSpace = Updateable<Omit<PublicSpaces, 'id'>>;

@@ -3,6 +3,7 @@ import SpaceMembersList from "@/features/space/components/space-members.tsx";
 import AddSpaceMembersModal from "@/features/space/components/add-space-members-modal.tsx";
 import React from "react";
 import SpaceDetails from "@/features/space/components/space-details.tsx";
+import SpaceLinksSettings from "@/features/space/components/space-links-settings.tsx";
 import SpaceSecuritySettings from "@/features/space/components/space-security-settings.tsx";
 import PublishSpaceSettings from "@/features/public-space/components/publish-space-settings.tsx";
 import { isPublicSpacesAllowed } from "@/features/public-space/utils/public-space-access.ts";
@@ -71,6 +72,9 @@ export default function SpaceSettingsModal({
                   <Tabs.Tab fw={500} value="members">
                     {t("Members")}
                   </Tabs.Tab>
+                  <Tabs.Tab fw={500} value="links">
+                    {t("Links")}
+                  </Tabs.Tab>
                   {canManageSettings && allowPublicSpaces && (
                     <Tabs.Tab fw={500} value="publish">
                       {t("Publish")}
@@ -112,6 +116,19 @@ export default function SpaceSettingsModal({
                       SpaceCaslSubject.Member,
                     )}
                   />
+                </Tabs.Panel>
+
+                <Tabs.Panel value="links">
+                  <ScrollArea h={580} scrollbarSize={5} pr={8}>
+                    <div style={{ paddingBottom: "100px" }}>
+                      {space && (
+                        <SpaceLinksSettings
+                          space={space}
+                          readOnly={!canManageSettings}
+                        />
+                      )}
+                    </div>
+                  </ScrollArea>
                 </Tabs.Panel>
 
                 <Tabs.Panel value="security">

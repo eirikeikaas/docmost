@@ -1,0 +1,10 @@
+.container {
+  margin: 0;
+  padding-left: 4px;
+  user-select: none;
+}
+
+.link {
+  display: block;
+  text-align: left;
+}

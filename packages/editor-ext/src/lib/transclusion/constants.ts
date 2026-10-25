@@ -31,6 +31,8 @@ export const TRANSCLUSION_SOURCE_ALLOWED_NODE_TYPES = [
   'excalidraw',
   'pdf',
   'subpages',
+  'tocBlock',
+  'recentPages',
   'columns',
   'youtube',
 ] as const;
