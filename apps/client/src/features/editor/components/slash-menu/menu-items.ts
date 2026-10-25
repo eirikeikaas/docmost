@@ -568,6 +568,15 @@ const CommandGroups: SlashMenuGroupedItemsType = {
       },
     },
     {
+      title: "Table of contents",
+      description: "Live outline of this page's headings",
+      searchTerms: ["toc", "table of contents", "outline", "headings", "index"],
+      icon: IconList,
+      command: ({ editor, range }: CommandProps) => {
+        editor.chain().focus().deleteRange(range).insertTocBlock().run();
+      },
+    },
+    {
       title: "Synced block",
       description: "Create a block that stays in sync across pages.",
       searchTerms: [
