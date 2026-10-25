@@ -64,6 +64,9 @@ async function bootstrap() {
   await app.register(fastifyIp);
   await app.register(fastifyMultipart);
   await app.register(fastifyCookie);
+  // No form-body plugin: Nest's Fastify adapter already parses
+  // application/x-www-form-urlencoded (needed by the SAML ACS callback), and
+  // registering a second parser throws FST_ERR_CTP_ALREADY_PRESENT at startup.
 
   const environmentService = app.get(EnvironmentService);
   const frameHeader = resolveFrameHeader(

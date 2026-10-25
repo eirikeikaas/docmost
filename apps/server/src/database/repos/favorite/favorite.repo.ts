@@ -303,6 +303,7 @@ export class FavoriteRepo {
           'pages.title',
           'pages.icon',
           'pages.isBase',
+          'pages.artifactUrl',
           'pages.spaceId',
         ])
         .whereRef('pages.id', '=', 'favorites.pageId')

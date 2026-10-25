@@ -8,7 +8,7 @@ import { UserRepo } from '@docmost/db/repos/user/user.repo';
 import { EncryptionService } from '../../integrations/encryption/encryption.service';
 import { SsoProviderService } from './services/sso-provider.service';
 import { SsoEntraBootstrapService } from './services/sso-entra-bootstrap.service';
-import { SsoOidcLoginService } from './services/sso-oidc-login.service';
+import { SsoLoginService } from './services/sso-login.service';
 
 // Opt-in: exercises the settings jsonb round trip, the environment bootstrap
 // and role sync against a real, migrated Postgres. Skipped unless
@@ -199,7 +199,7 @@ describeDb('OIDC provider settings against Postgres', () => {
 
     it('creates the provider once and is a no-op on every later start', async () => {
       await makeBootstrap().run();
-      const [created] = await authProviderRepo.findByWorkspaceId(workspace.id);
+      const [created] = await authProviderRepo.findByWorkspaceId(workspace.id, 'oidc');
       expect(created).toMatchObject({
         name: 'Microsoft Entra ID',
         oidcIssuer: `https://login.microsoftonline.com/${GUID}/v2.0`,
@@ -217,7 +217,7 @@ describeDb('OIDC provider settings against Postgres', () => {
         ],
         requiredRoles: ['agents_admin', 'agents_manage'],
       });
-      const withSecret = await authProviderRepo.findById(created.id, workspace.id, {
+      const withSecret = await authProviderRepo.findById(created.id, workspace.id, 'oidc', {
         includeSecret: true,
       });
       expect(withSecret!.oidcClientSecret).not.toContain('client-secret');
@@ -226,7 +226,7 @@ describeDb('OIDC provider settings against Postgres', () => {
       await makeBootstrap().run();
       await makeBootstrap().run();
 
-      const all = await authProviderRepo.findByWorkspaceId(workspace.id);
+      const all = await authProviderRepo.findByWorkspaceId(workspace.id, 'oidc');
       expect(all).toHaveLength(1);
       expect(all[0].updatedAt).toEqual(created.updatedAt);
     });
@@ -242,9 +242,9 @@ describeDb('OIDC provider settings against Postgres', () => {
         }),
       ).run();
 
-      const all = await authProviderRepo.findByWorkspaceId(workspace.id);
+      const all = await authProviderRepo.findByWorkspaceId(workspace.id, 'oidc');
       expect(all).toHaveLength(1);
-      const withSecret = await authProviderRepo.findById(all[0].id, workspace.id, {
+      const withSecret = await authProviderRepo.findById(all[0].id, workspace.id, 'oidc', {
         includeSecret: true,
       });
       expect(encryption.decrypt(withSecret!.oidcClientSecret!)).toBe('rotated-secret');
@@ -256,7 +256,7 @@ describeDb('OIDC provider settings against Postgres', () => {
 
     it('re-enables a provider an admin disabled', async () => {
       await makeBootstrap().run();
-      const [created] = await authProviderRepo.findByWorkspaceId(workspace.id);
+      const [created] = await authProviderRepo.findByWorkspaceId(workspace.id, 'oidc');
       await db
         .updateTable('authProviders')
         .set({ isEnabled: false })
@@ -265,14 +265,14 @@ describeDb('OIDC provider settings against Postgres', () => {
 
       await makeBootstrap().run();
 
-      const [after] = await authProviderRepo.findByWorkspaceId(workspace.id);
+      const [after] = await authProviderRepo.findByWorkspaceId(workspace.id, 'oidc');
       expect(after.isEnabled).toBe(true);
     });
   });
 
-  describe('SsoOidcLoginService role sync', () => {
+  describe('SsoLoginService role sync', () => {
     const makeLogin = () =>
-      new SsoOidcLoginService(
+      new SsoLoginService(
         new UserRepo(db as any),
         new AuthAccountRepo(db as any),
         {} as any,

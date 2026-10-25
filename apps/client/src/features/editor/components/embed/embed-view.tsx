@@ -23,11 +23,16 @@ import {
   getEmbedUrlAndProvider,
   sanitizeUrl,
 } from "@docmost/editor-ext";
+import { extractEmbedSrc } from "@/features/page/artifact/artifact.utils.ts";
 import { ResizableWrapper } from "../common/resizable-wrapper";
 import classes from "./embed-view.module.css";
 
+// Also accepts a pasted `<iframe src="…">` embed snippet.
 const schema = z.object({
-  url: z.url({ message: i18n.t("Please enter a valid url") }).trim(),
+  url: z.preprocess(
+    (value) => (typeof value === "string" ? extractEmbedSrc(value) : value),
+    z.url({ message: i18n.t("Please enter a valid url") }),
+  ),
 });
 
 export default function EmbedView(props: NodeViewProps) {
@@ -61,14 +66,16 @@ export default function EmbedView(props: NodeViewProps) {
       return;
     }
 
+    const url = extractEmbedSrc(data.url);
+
     if (provider) {
       const embedProvider = getEmbedProviderById(provider);
       if (embedProvider.id === "iframe") {
-        updateAttributes({ src: sanitizeUrl(data.url) });
+        updateAttributes({ src: sanitizeUrl(url) });
         return;
       }
-      if (embedProvider.regex.test(data.url)) {
-        updateAttributes({ src: sanitizeUrl(data.url) });
+      if (embedProvider.regex.test(url)) {
+        updateAttributes({ src: sanitizeUrl(url) });
       } else {
         notifications.show({
           message: t("Invalid {{provider}} embed link", {

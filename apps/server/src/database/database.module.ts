@@ -21,6 +21,7 @@ import { MigrationService } from '@docmost/db/services/migration.service';
 import { UserTokenRepo } from './repos/user-token/user-token.repo';
 import { UserSessionRepo } from '@docmost/db/repos/session/user-session.repo';
 import { BacklinkRepo } from '@docmost/db/repos/backlink/backlink.repo';
+import { DecisionRepo } from '@docmost/db/repos/decision/decision.repo';
 import { ShareRepo } from '@docmost/db/repos/share/share.repo';
 import { PublicSpaceRepo } from '@docmost/db/repos/public-space/public-space.repo';
 import { NotificationRepo } from '@docmost/db/repos/notification/notification.repo';
@@ -31,6 +32,7 @@ import { TemplateRepo } from '@docmost/db/repos/template/template.repo';
 import { AuthProviderRepo } from '@docmost/db/repos/auth-provider/auth-provider.repo';
 import { AuthAccountRepo } from '@docmost/db/repos/auth-provider/auth-account.repo';
 import { ServiceTokenRepo } from '@docmost/db/repos/service-token/service-token.repo';
+import { ScimTokenRepo } from '@docmost/db/repos/scim/scim-token.repo';
 import { PageListener } from '@docmost/db/listeners/page.listener';
 import { PostgresJSDialect } from 'kysely-postgres-js';
 import * as postgres from 'postgres';
@@ -91,6 +93,7 @@ import { normalizePostgresUrl } from '../common/helpers';
     UserTokenRepo,
     UserSessionRepo,
     BacklinkRepo,
+    DecisionRepo,
     ShareRepo,
     PublicSpaceRepo,
     NotificationRepo,
@@ -100,6 +103,7 @@ import { normalizePostgresUrl } from '../common/helpers';
     AuthProviderRepo,
     AuthAccountRepo,
     ServiceTokenRepo,
+    ScimTokenRepo,
     PageListener,
   ],
   exports: [
@@ -120,6 +124,7 @@ import { normalizePostgresUrl } from '../common/helpers';
     UserTokenRepo,
     UserSessionRepo,
     BacklinkRepo,
+    DecisionRepo,
     ShareRepo,
     PublicSpaceRepo,
     NotificationRepo,
@@ -129,6 +134,7 @@ import { normalizePostgresUrl } from '../common/helpers';
     AuthProviderRepo,
     AuthAccountRepo,
     ServiceTokenRepo,
+    ScimTokenRepo,
   ],
 })
 export class DatabaseModule implements OnApplicationBootstrap {

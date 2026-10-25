@@ -168,3 +168,52 @@ export function createYdocFromJson(prosemirrorJson: any): Buffer | null {
   }
   return null;
 }
+
+export type ExtractedDecision = {
+  decisionId: string;
+  status: 'undecided' | 'decided';
+  decisionText: string;
+};
+
+/**
+ * Walks TipTap JSON and collects decision nodes for the page_decisions index.
+ *
+ * Skips nodes missing a UniqueID. Prefer the first occurrence when duplicate
+ * decision ids appear in the same document.
+ *
+ * @param prosemirrorJson - TipTap document JSON from collab persist
+ * @returns Deduplicated decision rows ready for upsert
+ */
+export function extractDecisions(prosemirrorJson: any): ExtractedDecision[] {
+  if (!prosemirrorJson) {
+    return [];
+  }
+
+  const decisions: ExtractedDecision[] = [];
+  const seen = new Set<string>();
+
+  try {
+    const doc = jsonToNode(prosemirrorJson);
+    doc.descendants((node: Node) => {
+      if (node.type.name !== 'decision') {
+        return;
+      }
+
+      const decisionId = node.attrs?.id;
+      if (!decisionId || seen.has(decisionId)) {
+        return;
+      }
+
+      seen.add(decisionId);
+      decisions.push({
+        decisionId,
+        status: node.attrs?.status === 'decided' ? 'decided' : 'undecided',
+        decisionText: (node.textContent || '').trim(),
+      });
+    });
+  } catch {
+    return [];
+  }
+
+  return decisions;
+}

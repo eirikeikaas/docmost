@@ -5,6 +5,7 @@ export const OAUTH_TOKEN_THROTTLER = 'oauth-token';
 export const OAUTH_AUTHORIZE_THROTTLER = 'oauth-authorize';
 export const SIEM_TEST_THROTTLER = 'siem-test';
 export const SSO_OIDC_THROTTLER = 'sso-oidc';
+export const SSO_SAML_THROTTLER = 'sso-saml';
 
 // Every named throttler must appear here; spread it in @SkipThrottle and re-enable per name with false.
 export const ALL_NAMED_THROTTLERS_SKIPPED: Record<string, boolean> = {
@@ -15,4 +16,5 @@ export const ALL_NAMED_THROTTLERS_SKIPPED: Record<string, boolean> = {
   [OAUTH_AUTHORIZE_THROTTLER]: true,
   [SIEM_TEST_THROTTLER]: true,
   [SSO_OIDC_THROTTLER]: true,
+  [SSO_SAML_THROTTLER]: true,
 };

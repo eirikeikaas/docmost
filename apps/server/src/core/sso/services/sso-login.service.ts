@@ -27,7 +27,10 @@ import {
   IAuditService,
 } from '../../../integrations/audit/audit.service';
 
-export interface OidcIdentity {
+// Shared by every SSO protocol (OIDC, SAML, ...): each protocol controller
+// resolves its own provider-specific identity assertion down to this common
+// shape before handing off here.
+export interface SsoIdentity {
   providerUserId: string;
   email: string;
   // What the IdP itself asserted (email_verified === true on the email claim).
@@ -48,7 +51,7 @@ function isUserDisabled(user: User): boolean {
 // matches an existing local user. Read resolveOrProvisionUser() top to
 // bottom before changing it - the ordering is the security property.
 @Injectable()
-export class SsoOidcLoginService {
+export class SsoLoginService {
   constructor(
     private readonly userRepo: UserRepo,
     private readonly authAccountRepo: AuthAccountRepo,
@@ -61,7 +64,7 @@ export class SsoOidcLoginService {
   async resolveOrProvisionUser(
     provider: AuthProvider,
     workspace: Workspace,
-    identity: OidcIdentity,
+    identity: SsoIdentity,
   ): Promise<User> {
     const { providerUserId, email, emailVerified, name } = identity;
     const settings = parseOidcProviderSettings(provider.settings);
@@ -78,8 +81,8 @@ export class SsoOidcLoginService {
     const mappedRole = resolveMappedRole(roles, settings.roleMap);
 
     // 1. Existing link for this exact external identity. Email is never
-    // re-consulted once a link exists - sub is the only trust anchor from
-    // here on, forever.
+    // re-consulted once a link exists - the provider's own subject
+    // identifier is the only trust anchor from here on, forever.
     const link = await this.authAccountRepo.findByProviderAndProviderUserId(
       provider.id,
       providerUserId,
@@ -208,12 +211,12 @@ export class SsoOidcLoginService {
     return { ...user, role: mappedRole };
   }
 
-  async issueSession(user: User): Promise<string> {
+  async issueSession(user: User, source: 'oidc' | 'saml'): Promise<string> {
     this.auditService.log({
       event: AuditEvent.USER_LOGIN,
       resourceType: AuditResource.USER,
       resourceId: user.id,
-      metadata: { source: 'oidc' },
+      metadata: { source },
     });
     return this.sessionService.createSessionAndToken(user);
   }

@@ -195,6 +195,7 @@ export class SsoEntraBootstrapService {
   ): Promise<void> {
     const providers = await this.authProviderRepo.findByWorkspaceId(
       workspace.id,
+      'oidc',
     );
     const match =
       providers.find((provider) => provider.name === desired.name) ??
@@ -230,6 +231,7 @@ export class SsoEntraBootstrapService {
     const existing = await this.authProviderRepo.findById(
       match.id,
       workspace.id,
+      'oidc',
       { includeSecret: true },
     );
     if (!existing) return;

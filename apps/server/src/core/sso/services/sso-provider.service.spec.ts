@@ -8,8 +8,8 @@ function createService(overrides: Partial<Record<string, any>> = {}) {
   const authProviderRepo = {
     findByWorkspaceId: jest.fn().mockResolvedValue([]),
     findById: jest.fn(),
-    insertOidcProvider: jest.fn(),
-    updateOidcProvider: jest.fn(),
+    insertProvider: jest.fn(),
+    updateProvider: jest.fn(),
     softDeleteById: jest.fn().mockResolvedValue(undefined),
     ...overrides.authProviderRepo,
   };
@@ -35,7 +35,7 @@ describe('SsoProviderService', () => {
   it('encrypts the client secret on create and never returns it in plaintext', async () => {
     const { service, authProviderRepo, encryptionService } = createService({
       authProviderRepo: {
-        insertOidcProvider: jest.fn().mockResolvedValue({
+        insertProvider: jest.fn().mockResolvedValue({
           id: 'provider_1',
           name: 'Okta',
           type: 'oidc',
@@ -61,7 +61,8 @@ describe('SsoProviderService', () => {
     );
 
     expect(encryptionService.encrypt).toHaveBeenCalledWith('super-secret');
-    expect(authProviderRepo.insertOidcProvider).toHaveBeenCalledWith(
+    expect(authProviderRepo.insertProvider).toHaveBeenCalledWith(
+      'oidc',
       expect.objectContaining({ oidcClientSecret: 'enc(super-secret)' }),
     );
     expect(result).not.toHaveProperty('oidcClientSecret');
@@ -77,7 +78,7 @@ describe('SsoProviderService', () => {
     const { service, authProviderRepo, encryptionService } = createService({
       authProviderRepo: {
         findById: jest.fn().mockResolvedValue(existing),
-        updateOidcProvider: jest.fn().mockResolvedValue({
+        updateProvider: jest.fn().mockResolvedValue({
           ...existing,
           name: 'Okta Renamed',
           type: 'oidc',
@@ -96,9 +97,10 @@ describe('SsoProviderService', () => {
     );
 
     expect(encryptionService.encrypt).not.toHaveBeenCalled();
-    expect(authProviderRepo.updateOidcProvider).toHaveBeenCalledWith(
+    expect(authProviderRepo.updateProvider).toHaveBeenCalledWith(
       'provider_1',
       workspace.id,
+      'oidc',
       { name: 'Okta Renamed' },
     );
   });
@@ -108,7 +110,7 @@ describe('SsoProviderService', () => {
       createService({
         authProviderRepo: {
           findById: jest.fn().mockResolvedValue({ id: 'provider_1', name: 'Okta', isEnabled: false }),
-          updateOidcProvider: jest.fn().mockResolvedValue({
+          updateProvider: jest.fn().mockResolvedValue({
             id: 'provider_1',
             name: 'Okta',
             type: 'oidc',
@@ -128,9 +130,10 @@ describe('SsoProviderService', () => {
     );
 
     expect(encryptionService.encrypt).toHaveBeenCalledWith('rotated-secret');
-    expect(authProviderRepo.updateOidcProvider).toHaveBeenCalledWith(
+    expect(authProviderRepo.updateProvider).toHaveBeenCalledWith(
       'provider_1',
       workspace.id,
+      'oidc',
       { oidcClientSecret: 'enc(rotated-secret)' },
     );
     expect(oidcClientRegistry.invalidate).toHaveBeenCalledWith('provider_1');
@@ -158,6 +161,7 @@ describe('SsoProviderService', () => {
     expect(authProviderRepo.softDeleteById).toHaveBeenCalledWith(
       'provider_1',
       workspace.id,
+      'oidc',
     );
     expect(oidcClientRegistry.invalidate).toHaveBeenCalledWith('provider_1');
   });
@@ -231,12 +235,12 @@ describe('SsoProviderService - per-provider settings', () => {
   });
 
   it('stores the settings on create and returns them', async () => {
-    const insertOidcProvider = jest.fn().mockImplementation(async (row) => ({
+    const insertOidcProvider = jest.fn().mockImplementation(async (_type, row) => ({
       ...baseRow,
       settings: row.settings,
     }));
     const { service } = createService({
-      authProviderRepo: { insertOidcProvider },
+      authProviderRepo: { insertProvider: insertOidcProvider },
     });
 
     const view = await service.create(
@@ -254,6 +258,7 @@ describe('SsoProviderService - per-provider settings', () => {
     );
 
     expect(insertOidcProvider).toHaveBeenCalledWith(
+      'oidc',
       expect.objectContaining({
         settings: expect.objectContaining({
           trustUnverifiedEmail: true,
@@ -271,7 +276,7 @@ describe('SsoProviderService - per-provider settings', () => {
   it('does not write settings on create when none were supplied', async () => {
     const insertOidcProvider = jest.fn().mockResolvedValue(baseRow);
     const { service } = createService({
-      authProviderRepo: { insertOidcProvider },
+      authProviderRepo: { insertProvider: insertOidcProvider },
     });
 
     await service.create(
@@ -285,7 +290,7 @@ describe('SsoProviderService - per-provider settings', () => {
       workspace,
     );
 
-    expect(insertOidcProvider.mock.calls[0][0]).not.toHaveProperty('settings');
+    expect(insertOidcProvider.mock.calls[0][1]).not.toHaveProperty('settings');
   });
 
   it('merges a settings change on update without dropping what was not sent', async () => {
@@ -299,14 +304,14 @@ describe('SsoProviderService - per-provider settings', () => {
     };
     const updateOidcProvider = jest
       .fn()
-      .mockImplementation(async (_id, _ws, patch) => ({
+      .mockImplementation(async (_id, _ws, _type, patch) => ({
         ...existing,
         settings: patch.settings,
       }));
     const { service } = createService({
       authProviderRepo: {
         findById: jest.fn().mockResolvedValue(existing),
-        updateOidcProvider,
+        updateProvider: updateOidcProvider,
       },
     });
 
@@ -318,6 +323,7 @@ describe('SsoProviderService - per-provider settings', () => {
     expect(updateOidcProvider).toHaveBeenCalledWith(
       'provider_1',
       workspace.id,
+      'oidc',
       {
         settings: {
           somethingElse: 'keep',
@@ -343,14 +349,14 @@ describe('SsoProviderService - per-provider settings', () => {
     };
     const updateOidcProvider = jest
       .fn()
-      .mockImplementation(async (_id, _ws, patch) => ({
+      .mockImplementation(async (_id, _ws, _type, patch) => ({
         ...existing,
         settings: patch.settings,
       }));
     const { service } = createService({
       authProviderRepo: {
         findById: jest.fn().mockResolvedValue(existing),
-        updateOidcProvider,
+        updateProvider: updateOidcProvider,
       },
     });
 
@@ -381,7 +387,7 @@ describe('SsoProviderService - per-provider settings', () => {
         ),
       ).rejects.toThrow(BadRequestException);
 
-      expect(authProviderRepo.insertOidcProvider).not.toHaveBeenCalled();
+      expect(authProviderRepo.insertProvider).not.toHaveBeenCalled();
     },
   );
 
@@ -402,6 +408,6 @@ describe('SsoProviderService - per-provider settings', () => {
       ),
     ).rejects.toThrow(BadRequestException);
 
-    expect(authProviderRepo.updateOidcProvider).not.toHaveBeenCalled();
+    expect(authProviderRepo.updateProvider).not.toHaveBeenCalled();
   });
 });

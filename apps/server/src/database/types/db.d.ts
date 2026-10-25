@@ -311,6 +311,7 @@ export interface PageHistory {
 }
 
 export interface Pages {
+  artifactUrl: string | null;
   content: Json | null;
   contributorIds: Generated<string[] | null>;
   coverPhoto: string | null;
@@ -744,6 +745,18 @@ export interface OauthTokens {
   workspaceId: string;
 }
 
+export interface PageDecisions {
+  createdAt: Generated<Timestamp>;
+  decisionId: string;
+  decisionText: string;
+  id: Generated<string>;
+  pageId: string;
+  spaceId: string;
+  status: string;
+  updatedAt: Generated<Timestamp>;
+  workspaceId: string;
+}
+
 export interface DB {
   aiChats: AiChats;
   aiChatMessages: AiChatMessages;
@@ -765,6 +778,7 @@ export interface DB {
   labels: Labels;
   notifications: Notifications;
   pageAccess: PageAccess;
+  pageDecisions: PageDecisions;
   pageTransclusionReferences: PageTransclusionReferences;
   pageTransclusions: PageTransclusions;
   pagePermissions: PagePermissions;

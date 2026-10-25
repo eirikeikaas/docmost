@@ -29,6 +29,7 @@ const APP_ROUTE = {
       SECURITY: "/settings/security",
       SSO: "/settings/sso",
       SERVICE_TOKENS: "/settings/service-tokens",
+      SCIM: "/settings/scim",
     },
   },
 };

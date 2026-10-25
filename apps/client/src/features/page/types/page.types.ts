@@ -13,6 +13,7 @@ export interface IPage {
   workspaceId: string;
   isLocked: boolean;
   isBase: boolean;
+  artifactUrl?: string | null;
   lastUpdatedById: string;
   createdAt: Date;
   updatedAt: Date;
@@ -87,6 +88,7 @@ export interface IPageInput {
   coverPhoto: string;
   position: string;
   isLocked: boolean;
+  artifactUrl: string | null;
 }
 
 export interface IExportPageParams {

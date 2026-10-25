@@ -1,13 +1,17 @@
 services:
   docmost:
-    image: docmost/docmost:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: docmost-fork:local
     depends_on:
       - db
       - redis
     environment:
       APP_URL: 'http://localhost:3000'
-      APP_SECRET: 'REPLACE_WITH_LONG_SECRET'
-      DATABASE_URL: 'postgresql://docmost:STRONG_DB_PASSWORD@db:5432/docmost'
+      # Secrets come from .env (git-ignored); see .env.example.
+      APP_SECRET: '${DOCKER_APP_SECRET:?Set DOCKER_APP_SECRET in .env}'
+      DATABASE_URL: 'postgresql://docmost:${DOCKER_DB_PASSWORD:?Set DOCKER_DB_PASSWORD in .env}@db:5432/docmost'
       REDIS_URL: 'redis://redis:6379'
     ports:
       - "3000:3000"
@@ -20,7 +24,7 @@ services:
     environment:
       POSTGRES_DB: docmost
       POSTGRES_USER: docmost
-      POSTGRES_PASSWORD: STRONG_DB_PASSWORD
+      POSTGRES_PASSWORD: '${DOCKER_DB_PASSWORD:?Set DOCKER_DB_PASSWORD in .env}'
     restart: unless-stopped
     volumes:
       - db_data:/var/lib/postgresql
