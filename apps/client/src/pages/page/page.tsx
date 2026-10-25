@@ -106,6 +106,8 @@ function PageContent({ pageSlug }: { pageSlug: string | undefined }) {
           display: "flex",
           flexDirection: "column",
           boxSizing: "border-box",
+          // Cancel AppShell.Main's padding so the iframe is flush on all sides.
+          margin: "calc(var(--app-shell-padding, 0px) * -1)",
           paddingTop: "var(--page-header-height)",
         }}
       >
