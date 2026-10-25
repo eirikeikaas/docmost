@@ -10,12 +10,7 @@ import {
 import { AuthProviders, Json } from '@docmost/db/types/db';
 import { sql } from 'kysely';
 
-// This table is shared with EE-owned SAML/LDAP/Google provider types (its
-// `type` column is unconstrained free text, not a DB enum). Every query here
-// is deliberately scoped to `type = 'oidc'` and never selects the ldap_*,
-// saml_*, or oidcClientSecret columns unless explicitly requested — the
-// ldap_bind_password column in particular is stored in plaintext.
-const OIDC_PROVIDER_TYPE = 'oidc';
+export type SsoProviderType = 'oidc' | 'saml';
 
 // settings is a jsonb column; casting through text keeps arrays and nested
 // objects intact instead of relying on the driver's parameter inference.
@@ -27,6 +22,11 @@ function toJsonbSettings<T extends { settings?: unknown }>(row: T): T {
   };
 }
 
+// This table is shared with an EE-owned LDAP provider type (its `type`
+// column is unconstrained free text, not a DB enum, so every query here is
+// deliberately scoped to a known type). It also carries ldap_*/settings
+// columns this repo never selects - ldap_bind_password in particular is
+// stored in plaintext.
 @Injectable()
 export class AuthProviderRepo {
   constructor(@InjectKysely() private readonly db: KyselyDB) {}
@@ -37,6 +37,8 @@ export class AuthProviderRepo {
     'type',
     'oidcIssuer',
     'oidcClientId',
+    'samlUrl',
+    'samlCertificate',
     'allowSignup',
     'isEnabled',
     'settings',
@@ -49,6 +51,7 @@ export class AuthProviderRepo {
   async findById(
     id: string,
     workspaceId: string,
+    type: SsoProviderType,
     opts?: { includeSecret?: boolean; trx?: KyselyTransaction },
   ): Promise<AuthProvider | undefined> {
     const db = dbOrTx(this.db, opts?.trx);
@@ -57,15 +60,16 @@ export class AuthProviderRepo {
       .select(this.baseFields)
       .$if(opts?.includeSecret, (qb) => qb.select('oidcClientSecret'))
       .where('id', '=', id)
-      .where('type', '=', OIDC_PROVIDER_TYPE)
+      .where('type', '=', type)
       .where('workspaceId', '=', workspaceId)
       .where('deletedAt', 'is', null)
       .executeTakeFirst();
   }
 
-  async findEnabledOidcById(
+  async findEnabledById(
     id: string,
     workspaceId: string,
+    type: SsoProviderType,
     opts?: { includeSecret?: boolean; trx?: KyselyTransaction },
   ): Promise<AuthProvider | undefined> {
     const db = dbOrTx(this.db, opts?.trx);
@@ -74,7 +78,7 @@ export class AuthProviderRepo {
       .select(this.baseFields)
       .$if(opts?.includeSecret, (qb) => qb.select('oidcClientSecret'))
       .where('id', '=', id)
-      .where('type', '=', OIDC_PROVIDER_TYPE)
+      .where('type', '=', type)
       .where('workspaceId', '=', workspaceId)
       .where('isEnabled', '=', true)
       .where('deletedAt', 'is', null)
@@ -83,34 +87,37 @@ export class AuthProviderRepo {
 
   async findByWorkspaceId(
     workspaceId: string,
+    type: SsoProviderType,
     opts?: { trx?: KyselyTransaction },
   ): Promise<AuthProvider[]> {
     const db = dbOrTx(this.db, opts?.trx);
     return db
       .selectFrom('authProviders')
       .select(this.baseFields)
-      .where('type', '=', OIDC_PROVIDER_TYPE)
+      .where('type', '=', type)
       .where('workspaceId', '=', workspaceId)
       .where('deletedAt', 'is', null)
       .orderBy('createdAt', 'asc')
       .execute();
   }
 
-  async insertOidcProvider(
+  async insertProvider(
+    type: SsoProviderType,
     insertable: InsertableAuthProvider,
     trx?: KyselyTransaction,
   ): Promise<AuthProvider> {
     const db = dbOrTx(this.db, trx);
     return db
       .insertInto('authProviders')
-      .values({ ...toJsonbSettings(insertable), type: OIDC_PROVIDER_TYPE })
+      .values({ ...toJsonbSettings(insertable), type })
       .returning(this.baseFields)
       .executeTakeFirst();
   }
 
-  async updateOidcProvider(
+  async updateProvider(
     id: string,
     workspaceId: string,
+    type: SsoProviderType,
     updatable: UpdatableAuthProvider,
     trx?: KyselyTransaction,
   ): Promise<AuthProvider> {
@@ -119,15 +126,34 @@ export class AuthProviderRepo {
       .updateTable('authProviders')
       .set({ ...toJsonbSettings(updatable), updatedAt: new Date() })
       .where('id', '=', id)
-      .where('type', '=', OIDC_PROVIDER_TYPE)
+      .where('type', '=', type)
       .where('workspaceId', '=', workspaceId)
       .returning(this.baseFields)
       .executeTakeFirst();
   }
 
+  // OIDC-typed shorthands, kept for callers that only ever deal with OIDC
+  // (settings service, Entra bootstrap).
+  insertOidcProvider(
+    insertable: InsertableAuthProvider,
+    trx?: KyselyTransaction,
+  ): Promise<AuthProvider> {
+    return this.insertProvider('oidc', insertable, trx);
+  }
+
+  updateOidcProvider(
+    id: string,
+    workspaceId: string,
+    updatable: UpdatableAuthProvider,
+    trx?: KyselyTransaction,
+  ): Promise<AuthProvider> {
+    return this.updateProvider(id, workspaceId, 'oidc', updatable, trx);
+  }
+
   async softDeleteById(
     id: string,
     workspaceId: string,
+    type: SsoProviderType,
     trx?: KyselyTransaction,
   ): Promise<void> {
     const db = dbOrTx(this.db, trx);
@@ -135,7 +161,7 @@ export class AuthProviderRepo {
       .updateTable('authProviders')
       .set({ deletedAt: new Date(), isEnabled: false, updatedAt: new Date() })
       .where('id', '=', id)
-      .where('type', '=', OIDC_PROVIDER_TYPE)
+      .where('type', '=', type)
       .where('workspaceId', '=', workspaceId)
       .execute();
   }

@@ -26,6 +26,7 @@ import { FavoriteModule } from './favorite/favorite.module';
 import { SessionModule } from './session/session.module';
 import { SsoModule } from './sso/sso.module';
 import { ServiceTokenModule } from './service-token/service-token.module';
+import { ScimModule } from './scim/scim.module';
 import { ClsMiddleware } from 'nestjs-cls';
 
 @Module({
@@ -50,6 +51,7 @@ import { ClsMiddleware } from 'nestjs-cls';
     SessionModule,
     SsoModule,
     ServiceTokenModule,
+    ScimModule,
   ],
 })
 export class CoreModule implements NestModule {

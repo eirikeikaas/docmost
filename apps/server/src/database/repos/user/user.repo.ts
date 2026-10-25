@@ -98,6 +98,22 @@ export class UserRepo {
       .execute();
   }
 
+  // Unpaginated - for SCIM egress, which fetches the full set and filters
+  // in-memory rather than translating SCIM filter expressions into SQL.
+  async findAllByWorkspaceId(
+    workspaceId: string,
+    opts?: { trx?: KyselyTransaction },
+  ): Promise<User[]> {
+    const db = dbOrTx(this.db, opts?.trx);
+    return db
+      .selectFrom('users')
+      .select(this.baseFields)
+      .select('scimExternalId')
+      .where('workspaceId', '=', workspaceId)
+      .where('deletedAt', 'is', null)
+      .execute();
+  }
+
   async updateLastLogin(userId: string, workspaceId: string) {
     return await this.db
       .updateTable('users')

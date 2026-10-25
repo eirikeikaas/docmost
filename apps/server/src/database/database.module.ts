@@ -31,6 +31,7 @@ import { TemplateRepo } from '@docmost/db/repos/template/template.repo';
 import { AuthProviderRepo } from '@docmost/db/repos/auth-provider/auth-provider.repo';
 import { AuthAccountRepo } from '@docmost/db/repos/auth-provider/auth-account.repo';
 import { ServiceTokenRepo } from '@docmost/db/repos/service-token/service-token.repo';
+import { ScimTokenRepo } from '@docmost/db/repos/scim/scim-token.repo';
 import { PageListener } from '@docmost/db/listeners/page.listener';
 import { PostgresJSDialect } from 'kysely-postgres-js';
 import * as postgres from 'postgres';
@@ -100,6 +101,7 @@ import { normalizePostgresUrl } from '../common/helpers';
     AuthProviderRepo,
     AuthAccountRepo,
     ServiceTokenRepo,
+    ScimTokenRepo,
     PageListener,
   ],
   exports: [
@@ -129,6 +131,7 @@ import { normalizePostgresUrl } from '../common/helpers';
     AuthProviderRepo,
     AuthAccountRepo,
     ServiceTokenRepo,
+    ScimTokenRepo,
   ],
 })
 export class DatabaseModule implements OnApplicationBootstrap {

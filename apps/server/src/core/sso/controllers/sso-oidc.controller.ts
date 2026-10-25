@@ -32,7 +32,7 @@ import { AuthProviderRepo } from '@docmost/db/repos/auth-provider/auth-provider.
 import { EnvironmentService } from '../../../integrations/environment/environment.service';
 import { EncryptionService } from '../../../integrations/encryption/encryption.service';
 import { OidcClientRegistryService } from '../services/oidc-client-registry.service';
-import { SsoOidcLoginService } from '../services/sso-oidc-login.service';
+import { SsoLoginService } from '../services/sso-login.service';
 import {
   extractClaimValues,
   isSafeRedirectPath,
@@ -65,7 +65,7 @@ export class SsoOidcController {
   constructor(
     private readonly authProviderRepo: AuthProviderRepo,
     private readonly oidcClientRegistry: OidcClientRegistryService,
-    private readonly ssoOidcLoginService: SsoOidcLoginService,
+    private readonly ssoLoginService: SsoLoginService,
     private readonly environmentService: EnvironmentService,
     private readonly encryptionService: EncryptionService,
   ) {}
@@ -77,9 +77,10 @@ export class SsoOidcController {
     @AuthWorkspace() workspace: Workspace,
     @Res() res: FastifyReply,
   ) {
-    const provider = await this.authProviderRepo.findEnabledOidcById(
+    const provider = await this.authProviderRepo.findEnabledById(
       providerId,
       workspace.id,
+      'oidc',
       { includeSecret: true },
     );
     if (!provider) {
@@ -157,9 +158,10 @@ export class SsoOidcController {
       );
     }
 
-    const provider = await this.authProviderRepo.findEnabledOidcById(
+    const provider = await this.authProviderRepo.findEnabledById(
       attempt.providerId,
       workspace.id,
+      'oidc',
       { includeSecret: true },
     );
     if (!provider) {
@@ -228,7 +230,7 @@ export class SsoOidcController {
       extractClaimValues(userInfo, roleClaim) ??
       [];
 
-    const user = await this.ssoOidcLoginService.resolveOrProvisionUser(
+    const user = await this.ssoLoginService.resolveOrProvisionUser(
       provider,
       workspace,
       {
@@ -240,7 +242,7 @@ export class SsoOidcController {
       },
     );
 
-    const authToken = await this.ssoOidcLoginService.issueSession(user);
+    const authToken = await this.ssoLoginService.issueSession(user, 'oidc');
     res.setCookie('authToken', authToken, {
       httpOnly: true,
       sameSite: 'lax',

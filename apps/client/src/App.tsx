@@ -40,6 +40,7 @@ const SsoSettings = lazy(() => import("@/pages/settings/sso/sso-settings.tsx"));
 const ServiceTokens = lazy(
   () => import("@/pages/settings/service-tokens/service-tokens.tsx"),
 );
+const ScimSettings = lazy(() => import("@/pages/settings/scim/scim-settings.tsx"));
 const License = lazy(() => import("@/ee/licence/pages/license.tsx"));
 const SharedPage = lazy(() => import("@/pages/share/shared-page.tsx"));
 const PdfRenderPage = lazy(() => import("@/ee/pdf-export/pdf-render-page.tsx"));
@@ -187,6 +188,7 @@ export default function App() {
             <Route path={"security"} element={<Security />} />
             <Route path={"sso"} element={<SsoSettings />} />
             <Route path={"service-tokens"} element={<ServiceTokens />} />
+            <Route path={"scim"} element={<ScimSettings />} />
             <Route path={"ai"} element={<AiSettings />} />
             <Route path={"ai/mcp"} element={<AiSettings />} />
             <Route path={"audit"} element={<AuditLogs />} />

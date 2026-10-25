@@ -1,5 +1,5 @@
 import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
-import { SsoOidcLoginService } from './sso-oidc-login.service';
+import { SsoLoginService } from './sso-login.service';
 
 const provider: any = {
   id: 'provider_1',
@@ -37,7 +37,7 @@ function createService(overrides: Partial<Record<string, any>> = {}) {
   };
   const auditService = { log: jest.fn() };
 
-  const service = new SsoOidcLoginService(
+  const service = new SsoLoginService(
     userRepo as any,
     authAccountRepo as any,
     signupService as any,
@@ -49,7 +49,7 @@ function createService(overrides: Partial<Record<string, any>> = {}) {
   return { service, userRepo, authAccountRepo, signupService, sessionService, auditService };
 }
 
-describe('SsoOidcLoginService.resolveOrProvisionUser', () => {
+describe('SsoLoginService.resolveOrProvisionUser', () => {
   it('logs straight in when a link already exists, without re-checking email', async () => {
     const existingUser = { id: 'user_1', deletedAt: null, deactivatedAt: null };
     const { service, authAccountRepo, userRepo } = createService({
@@ -194,23 +194,23 @@ describe('SsoOidcLoginService.resolveOrProvisionUser', () => {
   });
 });
 
-describe('SsoOidcLoginService.issueSession', () => {
+describe('SsoLoginService.issueSession', () => {
   it('mints a session token and logs a login audit event', async () => {
     const { service, sessionService, auditService } = createService();
 
-    const token = await service.issueSession({ id: 'user_1' } as any);
+    const token = await service.issueSession({ id: 'user_1' } as any, 'saml');
 
     expect(token).toBe('jwt-token');
     expect(sessionService.createSessionAndToken).toHaveBeenCalledWith({
       id: 'user_1',
     });
     expect(auditService.log).toHaveBeenCalledWith(
-      expect.objectContaining({ metadata: { source: 'oidc' } }),
+      expect.objectContaining({ metadata: { source: 'saml' } }),
     );
   });
 });
 
-describe('SsoOidcLoginService - trustUnverifiedEmail', () => {
+describe('SsoLoginService - trustUnverifiedEmail', () => {
   const entraProvider = (settings: Record<string, unknown> = {}): any => ({
     ...provider,
     settings,
@@ -333,7 +333,7 @@ describe('SsoOidcLoginService - trustUnverifiedEmail', () => {
   });
 });
 
-describe('SsoOidcLoginService - requiredRoles', () => {
+describe('SsoLoginService - requiredRoles', () => {
   const gated: any = {
     ...provider,
     settings: { requiredRoles: ['agents_admin', 'agents_manage'] },
@@ -421,7 +421,7 @@ describe('SsoOidcLoginService - requiredRoles', () => {
   });
 });
 
-describe('SsoOidcLoginService - role mapping', () => {
+describe('SsoLoginService - role mapping', () => {
   const mapped: any = {
     ...provider,
     settings: {
@@ -442,7 +442,7 @@ describe('SsoOidcLoginService - role mapping', () => {
       userRepo: { findById: jest.fn().mockResolvedValue(user) },
     });
   const login = (
-    service: SsoOidcLoginService,
+    service: SsoLoginService,
     roles: string[],
     providerOverride: any = mapped,
   ) =>
