@@ -68,6 +68,19 @@ export class SpaceRepo {
       .executeTakeFirst();
   }
 
+  async findByProjectId(
+    projectId: string,
+    workspaceId: string,
+  ): Promise<Space | undefined> {
+    return this.db
+      .selectFrom('spaces')
+      .selectAll('spaces')
+      .where('projectId', '=', projectId)
+      .where('workspaceId', '=', workspaceId)
+      .where('deletedAt', 'is', null)
+      .executeTakeFirst();
+  }
+
   async findPersonalSpace(
     userId: string,
     workspaceId: string,

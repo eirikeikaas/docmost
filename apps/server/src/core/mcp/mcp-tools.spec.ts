@@ -30,12 +30,34 @@ describe('docmost MCP tools', () => {
     expect(tools.map((t) => t.name).sort()).toEqual([
       'create_artifact_page',
       'create_page',
+      'find_space_by_project',
       'get_page',
+      'get_space_links',
       'list_child_pages',
       'list_spaces',
       'search_pages',
+      'set_space_link',
+      'set_space_project',
       'update_page',
     ]);
+  });
+
+  it('set_space_project posts the project id to /spaces/update', async () => {
+    const api = jest
+      .fn()
+      .mockResolvedValue({ id: SPACE_ID, slug: 'fou', projectId: 'FOU0002' });
+    const client = await connect(api);
+
+    const res = await client.callTool({
+      name: 'set_space_project',
+      arguments: { spaceId: SPACE_ID, projectId: 'FOU0002' },
+    });
+
+    expect(api).toHaveBeenCalledWith('/spaces/update', {
+      spaceId: SPACE_ID,
+      projectId: 'FOU0002',
+    });
+    expect(JSON.parse(text(res)).projectId).toBe('FOU0002');
   });
 
   it('marks read tools read-only and leaves write tools unmarked', async () => {

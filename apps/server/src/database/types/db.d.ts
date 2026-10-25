@@ -409,10 +409,22 @@ export interface Spaces {
   isPersonal: Generated<boolean>;
   logo: string | null;
   name: string | null;
+  projectId: string | null;
   settings: Json | null;
   slug: string;
   updatedAt: Generated<Timestamp>;
   visibility: Generated<string>;
+  workspaceId: string;
+}
+
+export interface SpaceLinks {
+  createdAt: Generated<Timestamp>;
+  externalId: string | null;
+  id: Generated<string>;
+  provider: string;
+  spaceId: string;
+  updatedAt: Generated<Timestamp>;
+  url: string | null;
   workspaceId: string;
 }
 
@@ -788,6 +800,7 @@ export interface DB {
   pageVerifiers: PageVerifiers;
   pages: Pages;
   publicSpaces: PublicSpaces;
+  spaceLinks: SpaceLinks;
   scimTokens: ScimTokens;
   serviceTokens: ServiceTokens;
   shares: Shares;

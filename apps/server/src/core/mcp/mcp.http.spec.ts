@@ -98,7 +98,7 @@ describe('MCP HTTP endpoint', () => {
       arguments: {},
     });
     expect(JSON.parse(res.content[0].text)).toEqual([
-      { id: 's1', name: 'Docs', slug: 'docs' },
+      { id: 's1', name: 'Docs', slug: 'docs', projectId: null },
     ]);
 
     expect(apiCalls).toHaveLength(1);

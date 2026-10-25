@@ -16,6 +16,9 @@ import {
   addSpaceMember,
   changeMemberRole,
   getSpaceById,
+  getSpaceLinks,
+  setSpaceLink,
+  removeSpaceLink,
   getSpaceMembers,
   getSpaces,
   removeSpaceMember,
@@ -133,6 +136,40 @@ export function useUpdateSpaceMutation() {
     onError: (error) => {
       const errorMessage = error["response"]?.data?.message;
       notifications.show({ message: errorMessage, color: "red" });
+    },
+  });
+}
+
+export function useSpaceLinksQuery(spaceId: string) {
+  return useQuery({
+    queryKey: ["space-links", spaceId],
+    queryFn: () => getSpaceLinks(spaceId),
+    enabled: !!spaceId,
+  });
+}
+
+export function useSetSpaceLinkMutation(spaceId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: setSpaceLink,
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["space-links", spaceId] }),
+    onError: (error) => {
+      const message = error["response"]?.data?.message;
+      notifications.show({ message, color: "red" });
+    },
+  });
+}
+
+export function useRemoveSpaceLinkMutation(spaceId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: removeSpaceLink,
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ["space-links", spaceId] }),
+    onError: (error) => {
+      const message = error["response"]?.data?.message;
+      notifications.show({ message, color: "red" });
     },
   });
 }

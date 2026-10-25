@@ -38,6 +38,14 @@ import { CreateSpaceDto } from './dto/create-space.dto';
 import { RequireSessionAuth } from '../../common/decorators/require-session-auth.decorator';
 import { ListSpaceDecisionsDto } from './dto/list-space-decisions.dto';
 import { DecisionService } from './services/decision.service';
+import { SpaceLinkService } from './services/space-link.service';
+import { SpaceRepo } from '@docmost/db/repos/space/space.repo';
+import {
+  RemoveSpaceLinkDto,
+  SetSpaceLinkDto,
+  SpaceByProjectDto,
+} from './dto/space-link.dto';
+import { normalizeProjectId } from './space-links';
 
 @UseGuards(JwtAuthGuard)
 @Controller('spaces')
@@ -49,6 +57,8 @@ export class SpaceController {
     private readonly spaceAbility: SpaceAbilityFactory,
     private readonly workspaceAbility: WorkspaceAbilityFactory,
     private readonly decisionService: DecisionService,
+    private readonly spaceLinkService: SpaceLinkService,
+    private readonly spaceRepo: SpaceRepo,
   ) {}
 
   @HttpCode(HttpStatus.OK)
@@ -160,6 +170,94 @@ export class SpaceController {
       status: dto.status,
       limit: dto.limit,
     });
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('links')
+  @OAuthScope('read')
+  async listSpaceLinks(
+    @Body() dto: SpaceIdDto,
+    @AuthUser() user: User,
+    @AuthWorkspace() workspace: Workspace,
+  ) {
+    const space = await this.getReadableSpace(dto.spaceId, user, workspace);
+    const links = await this.spaceLinkService.list(space.id, workspace.id);
+    return { projectId: space.projectId ?? null, links };
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('links/set')
+  @OAuthScope('write')
+  async setSpaceLink(
+    @Body() dto: SetSpaceLinkDto,
+    @AuthUser() user: User,
+    @AuthWorkspace() workspace: Workspace,
+  ) {
+    const space = await this.getManageableSpace(dto.spaceId, user, workspace);
+    return this.spaceLinkService.set(dto, space.id, workspace.id);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('links/remove')
+  @OAuthScope('write')
+  async removeSpaceLink(
+    @Body() dto: RemoveSpaceLinkDto,
+    @AuthUser() user: User,
+    @AuthWorkspace() workspace: Workspace,
+  ) {
+    const space = await this.getManageableSpace(dto.spaceId, user, workspace);
+    await this.spaceLinkService.remove(space.id, workspace.id, dto.provider);
+  }
+
+  /** Resolves the space that owns a Marathon project id, if the user may read it. */
+  @HttpCode(HttpStatus.OK)
+  @Post('by-project')
+  @OAuthScope('read')
+  async getSpaceByProject(
+    @Body() dto: SpaceByProjectDto,
+    @AuthUser() user: User,
+    @AuthWorkspace() workspace: Workspace,
+  ) {
+    const projectId = normalizeProjectId(dto.projectId);
+    const space = await this.spaceRepo.findByProjectId(projectId, workspace.id);
+    if (!space) {
+      throw new NotFoundException('No space is linked to this project');
+    }
+    await this.getReadableSpace(space.id, user, workspace);
+    const links = await this.spaceLinkService.list(space.id, workspace.id);
+    return {
+      id: space.id,
+      name: space.name,
+      slug: space.slug,
+      projectId: space.projectId,
+      links,
+    };
+  }
+
+  private async getReadableSpace(
+    spaceId: string,
+    user: User,
+    workspace: Workspace,
+  ) {
+    const space = await this.spaceService.getSpaceInfo(spaceId, workspace.id);
+    const ability = await this.spaceAbility.createForUser(user, space.id);
+    if (ability.cannot(SpaceCaslAction.Read, SpaceCaslSubject.Page)) {
+      throw new ForbiddenException();
+    }
+    return space;
+  }
+
+  private async getManageableSpace(
+    spaceId: string,
+    user: User,
+    workspace: Workspace,
+  ) {
+    const space = await this.spaceService.getSpaceInfo(spaceId, workspace.id);
+    const ability = await this.spaceAbility.createForUser(user, space.id);
+    if (ability.cannot(SpaceCaslAction.Manage, SpaceCaslSubject.Settings)) {
+      throw new ForbiddenException();
+    }
+    return space;
   }
 
   @HttpCode(HttpStatus.OK)
