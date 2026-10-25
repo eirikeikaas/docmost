@@ -13,6 +13,21 @@ export interface ISpaceCommentsSettings {
   allowViewerComments?: boolean;
 }
 
+export type SpaceLinkProvider = "sharepoint" | "linear" | "trylle" | "busy";
+
+export interface ISpaceLink {
+  id: string;
+  spaceId: string;
+  provider: SpaceLinkProvider;
+  url: string | null;
+  externalId: string | null;
+}
+
+export interface ISpaceLinks {
+  projectId: string | null;
+  links: ISpaceLink[];
+}
+
 export interface ISpaceSettings {
   sharing?: ISpaceSharingSettings;
   comments?: ISpaceCommentsSettings;
@@ -34,6 +49,7 @@ export interface ISpace {
   spaceId?: string;
   membership?: IMembership;
   settings?: ISpaceSettings;
+  projectId?: string | null;
   // for updates
   disablePublicSharing?: boolean;
   allowViewerComments?: boolean;

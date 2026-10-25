@@ -73,8 +73,73 @@ export function registerDocmostTools(
           name: s.name,
           slug: s.slug,
           description: s.description,
+          projectId: s.projectId ?? null,
         }));
       }),
+  );
+
+  const projectId = z
+    .string()
+    .min(1)
+    .describe('Marathon project id, up to four letters + four digits, e.g. FOU0002');
+  const provider = z.enum(['sharepoint', 'linear', 'trylle', 'busy']);
+
+  server.registerTool(
+    'find_space_by_project',
+    {
+      title: 'Find space by project id',
+      description:
+        'Resolve the space linked to a Marathon project id, with its linked systems (SharePoint, Linear, TRYlle, Busy).',
+      inputSchema: { projectId },
+      annotations: { readOnlyHint: true },
+    },
+    ({ projectId }) => run(() => api('/spaces/by-project', { projectId })),
+  );
+
+  server.registerTool(
+    'get_space_links',
+    {
+      title: 'Get space links',
+      description:
+        "Get a space's Marathon project id and its links to external systems.",
+      inputSchema: { spaceId: z.string().min(1).describe('Space id or slug') },
+      annotations: { readOnlyHint: true },
+    },
+    ({ spaceId }) => run(() => api('/spaces/links', { spaceId })),
+  );
+
+  server.registerTool(
+    'set_space_project',
+    {
+      title: 'Set space project id',
+      description:
+        'Link a space to a Marathon project id. Pass an empty string to clear it. A project id can belong to only one space.',
+      inputSchema: {
+        spaceId: z.string().min(1).describe('Space id or slug'),
+        projectId: projectId.or(z.literal('')),
+      },
+    },
+    ({ spaceId, projectId }) =>
+      run(async () => {
+        const space: any = await api('/spaces/update', { spaceId, projectId });
+        return { id: space.id, slug: space.slug, projectId: space.projectId };
+      }),
+  );
+
+  server.registerTool(
+    'set_space_link',
+    {
+      title: 'Set space link',
+      description:
+        'Create or replace a space link to an external system. A url is required for sharepoint and linear; trylle and busy are resolved from the project id and may omit it.',
+      inputSchema: {
+        spaceId: z.string().min(1).describe('Space id or slug'),
+        provider,
+        url: z.string().url().optional(),
+      },
+    },
+    ({ spaceId, provider, url }) =>
+      run(() => api('/spaces/links/set', compact({ spaceId, provider, url }))),
   );
 
   server.registerTool(

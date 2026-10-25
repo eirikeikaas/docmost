@@ -14,6 +14,7 @@ import { UpdateSpaceDto } from '../dto/update-space.dto';
 import { executeTx } from '@docmost/db/utils';
 import { InjectKysely } from 'nestjs-kysely';
 import { Feature } from '../../../common/features';
+import { isValidProjectId, normalizeProjectId } from '../space-links';
 import { SpaceMemberService } from './space-member.service';
 import { SpaceRole } from '../../../common/helpers/types/permission';
 import { QueueJob, QueueName } from 'src/integrations/queue/constants';
@@ -170,6 +171,27 @@ export class SpaceService {
       }
     }
 
+    let projectId: string | null | undefined;
+    if (typeof updateSpaceDto.projectId !== 'undefined') {
+      projectId = normalizeProjectId(updateSpaceDto.projectId) || null;
+      if (projectId !== null) {
+        if (!isValidProjectId(projectId)) {
+          throw new BadRequestException(
+            'Project id must be up to four letters followed by four digits, e.g. FOU0002',
+          );
+        }
+        const owner = await this.spaceRepo.findByProjectId(
+          projectId,
+          workspaceId,
+        );
+        if (owner && owner.id !== updateSpaceDto.spaceId) {
+          throw new BadRequestException(
+            `Project ${projectId} is already linked to the space "${owner.name}"`,
+          );
+        }
+      }
+    }
+
     const spaceBefore = await this.spaceRepo.findById(
       updateSpaceDto.spaceId,
       workspaceId,
@@ -223,12 +245,21 @@ export class SpaceService {
           name: updateSpaceDto.name,
           description: updateSpaceDto.description,
           slug: updateSpaceDto.slug,
+          projectId,
         },
         updateSpaceDto.spaceId,
         workspaceId,
         trx,
       );
     });
+
+    if (
+      typeof projectId !== 'undefined' &&
+      projectId !== (spaceBefore?.projectId ?? null)
+    ) {
+      before.projectId = spaceBefore?.projectId ?? null;
+      after.projectId = projectId;
+    }
 
     const columnChanges = diffAuditTrackedFields(
       ['name', 'slug', 'description'],

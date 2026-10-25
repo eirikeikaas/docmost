@@ -5,7 +5,10 @@ import {
   IExportSpaceParams,
   IRemoveSpaceMember,
   ISpace,
+  ISpaceLink,
+  ISpaceLinks,
   ISpaceMember,
+  SpaceLinkProvider,
 } from "@/features/space/types/space.types";
 import { IPagination, QueryParams } from "@/lib/types.ts";
 import { saveAs } from "file-saver";
@@ -30,6 +33,28 @@ export async function createSpace(data: Partial<ISpace>): Promise<ISpace> {
 export async function updateSpace(data: Partial<ISpace>): Promise<ISpace> {
   const req = await api.post<ISpace>("/spaces/update", data);
   return req.data;
+}
+
+export async function getSpaceLinks(spaceId: string): Promise<ISpaceLinks> {
+  const req = await api.post<ISpaceLinks>("/spaces/links", { spaceId });
+  return req.data;
+}
+
+export async function setSpaceLink(data: {
+  spaceId: string;
+  provider: SpaceLinkProvider;
+  url?: string;
+  externalId?: string;
+}): Promise<ISpaceLink> {
+  const req = await api.post<ISpaceLink>("/spaces/links/set", data);
+  return req.data;
+}
+
+export async function removeSpaceLink(data: {
+  spaceId: string;
+  provider: SpaceLinkProvider;
+}): Promise<void> {
+  await api.post<void>("/spaces/links/remove", data);
 }
 
 export async function deleteSpace(spaceId: string): Promise<void> {
