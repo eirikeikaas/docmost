@@ -10,7 +10,6 @@ import { TransformHttpResponseInterceptor } from './common/interceptors/http-res
 import { WsRedisIoAdapter } from './ws/adapter/ws-redis.adapter';
 import fastifyMultipart from '@fastify/multipart';
 import fastifyCookie from '@fastify/cookie';
-import fastifyFormbody from '@fastify/formbody';
 import fastifyIp from 'fastify-ip';
 import { InternalLogFilter } from './common/logger/internal-log-filter';
 import { EnvironmentService } from './integrations/environment/environment.service';
@@ -65,9 +64,9 @@ async function bootstrap() {
   await app.register(fastifyIp);
   await app.register(fastifyMultipart);
   await app.register(fastifyCookie);
-  // The SAML ACS callback receives its assertion as an
-  // application/x-www-form-urlencoded POST body (SAMLResponse + RelayState).
-  await app.register(fastifyFormbody);
+  // No form-body plugin: Nest's Fastify adapter already parses
+  // application/x-www-form-urlencoded (needed by the SAML ACS callback), and
+  // registering a second parser throws FST_ERR_CTP_ALREADY_PRESENT at startup.
 
   const environmentService = app.get(EnvironmentService);
   const frameHeader = resolveFrameHeader(
