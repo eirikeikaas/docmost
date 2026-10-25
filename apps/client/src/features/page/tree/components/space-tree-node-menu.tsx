@@ -88,11 +88,16 @@ export function NodeMenu({ node, canEdit }: NodeMenuProps) {
     notifications.show({ message: t("Link copied") });
   };
 
-  const setArtifactUrl = async (artifactUrl: string | null) => {
-    await updatePageMutation.mutateAsync({ pageId: node.id, artifactUrl });
-    setData((prev) =>
-      treeModel.update(prev, node.id, { artifactUrl } as Partial<SpaceTreeNode>),
-    );
+  const setArtifactUrl = async (artifactUrl: string | null, title?: string) => {
+    const changes: Partial<SpaceTreeNode> = { artifactUrl };
+    const update: { pageId: string; artifactUrl: string | null; title?: string } =
+      { pageId: node.id, artifactUrl };
+    if (title !== undefined && title !== (node.name ?? "")) {
+      update.title = title;
+      changes.name = title;
+    }
+    await updatePageMutation.mutateAsync(update);
+    setData((prev) => treeModel.update(prev, node.id, changes));
   };
 
   const handleDuplicatePage = async () => {
@@ -338,7 +343,9 @@ export function NodeMenu({ node, canEdit }: NodeMenuProps) {
         opened={childArtifactOpened}
         onClose={closeChildArtifact}
         title={t("New artifact subpage")}
-        onCreate={(artifactUrl) => handleCreate(node.id, { artifactUrl })}
+        onCreate={(artifactUrl, title) =>
+          handleCreate(node.id, { artifactUrl, title })
+        }
       />
 
       <CreateArtifactPageModal
@@ -350,6 +357,8 @@ export function NodeMenu({ node, canEdit }: NodeMenuProps) {
             : t("Convert to artifact page")
         }
         submitLabel={node.artifactUrl ? t("Save") : t("Convert")}
+        initialTitle={node.name}
+        initialUrl={node.artifactUrl ?? ""}
         onCreate={setArtifactUrl}
       />
     </>
