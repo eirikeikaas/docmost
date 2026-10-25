@@ -26,6 +26,7 @@ import { FavoriteModule } from './favorite/favorite.module';
 import { SessionModule } from './session/session.module';
 import { SsoModule } from './sso/sso.module';
 import { ServiceTokenModule } from './service-token/service-token.module';
+import { CollectionModule } from './collection/collection.module';
 import { ScimModule } from './scim/scim.module';
 import { ClsMiddleware } from 'nestjs-cls';
 
@@ -35,6 +36,7 @@ import { ClsMiddleware } from 'nestjs-cls';
     AuthModule,
     WorkspaceModule,
     PageModule,
+    CollectionModule,
     AttachmentModule,
     CommentModule,
     FavoriteModule,
