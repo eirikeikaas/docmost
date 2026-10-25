@@ -577,6 +577,15 @@ const CommandGroups: SlashMenuGroupedItemsType = {
       },
     },
     {
+      title: "Recent pages",
+      description: "List the most recently updated pages in this space",
+      searchTerms: ["recent", "latest", "updated", "changes", "new"],
+      icon: IconClock,
+      command: ({ editor, range }: CommandProps) => {
+        editor.chain().focus().deleteRange(range).insertRecentPages().run();
+      },
+    },
+    {
       title: "Synced block",
       description: "Create a block that stays in sync across pages.",
       searchTerms: [

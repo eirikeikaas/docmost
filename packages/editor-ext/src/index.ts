@@ -22,6 +22,7 @@ export * from "./lib/search-and-replace";
 export * from "./lib/embed-provider";
 export * from "./lib/subpages";
 export * from "./lib/toc-block";
+export * from "./lib/recent-pages";
 export * from "./lib/transclusion";
 export * from "./lib/highlight";
 export * from "./lib/indent";

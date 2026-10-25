@@ -53,6 +53,7 @@ import {
   TableReadonlySort,
   Subpages,
   TocBlock,
+  RecentPages,
   Heading,
   Highlight,
   Indent,
@@ -97,6 +98,7 @@ import EmbedView from "@/features/editor/components/embed/embed-view.tsx";
 import PdfView from "@/features/editor/components/pdf/pdf-view.tsx";
 import SubpagesView from "@/features/editor/components/subpages/subpages-view.tsx";
 import TocBlockView from "@/features/editor/components/toc-block/toc-block-view.tsx";
+import RecentPagesView from "@/features/editor/components/recent-pages/recent-pages-view.tsx";
 import TransclusionView from "@/features/editor/components/transclusion/transclusion-view.tsx";
 import TransclusionReferenceView from "@/features/editor/components/transclusion/transclusion-reference-view.tsx";
 import { BaseEmbedView } from "@/features/editor/components/base-embed/base-embed-view.tsx";
@@ -390,6 +392,9 @@ export const mainExtensions = [
   }),
   TocBlock.configure({
     view: TocBlockView,
+  }),
+  RecentPages.configure({
+    view: RecentPagesView,
   }),
   Status.configure({
     view: StatusView,
